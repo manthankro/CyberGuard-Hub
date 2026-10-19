@@ -240,7 +240,8 @@ function showPage(pageId) {
       dashboard: 'Overview',
       playbooks: 'Incident Playbooks',
       rules: 'Rules Catalog',
-      history: 'Audit History'
+      history: 'Audit History',
+      'email-exposure': 'Email Exposure Check'
     }[pageId] || 'Workspace';
   }
 
@@ -327,6 +328,7 @@ function setupEvents() {
 
   // Analysis Button
   $('#analyze-button')?.addEventListener('click', runAnalysis);
+  $('#email-exposure-form')?.addEventListener('submit', runEmailExposureCheck);
 
   // Keyboard shortcut: Cmd/Ctrl + Enter to trigger analysis
   document.addEventListener('keydown', e => {
@@ -575,6 +577,7 @@ async function runAnalysis() {
       const form = new FormData();
       form.append('file', file);
       form.append('ai_visual_review', $('#media-ai-consent').checked ? 'true' : 'false');
+      form.append('ai_authenticity_scan', $('#media-authenticity-consent').checked ? 'true' : 'false');
       response = await fetch(meta.endpoint, { method: 'POST', body: form });
     } else {
       const inputMap = { triage: 'triage-input', text: 'text-input', url: 'url-input', code: 'code-input' };
@@ -891,6 +894,24 @@ function renderEvidenceReport(data, rawInput) {
         <div class="ai-context-body">${escapeHtml(data.visual_review.observations)}</div>
       </div>
     `;
+  }
+
+  if (data.authenticity_scan) {
+    const scan = data.authenticity_scan;
+    const formatProbability = function(value) {
+      if (value === null || value === undefined || value === '') return 'not reported';
+      const number = Number(value);
+      return Number.isFinite(number) ? Math.round(number * 100) + '%' : 'not reported';
+    };
+    const rows = (scan.frames || []).map(function(frame, index) {
+      const time = frame.time == null ? '' : ' at ' + escapeHtml(String(frame.time)) + 's';
+      return '<p>Frame ' + (index + 1) + time + ': AI-generated ' + formatProbability(frame.ai_generated_probability) + ' · deepfake ' + formatProbability(frame.deepfake_probability) + '</p>';
+    }).join('');
+    html += '<div class="ai-context-card"><div class="ai-context-header"><span>Video model signals · ' + escapeHtml(scan.provider || 'provider') + '</span></div><div class="ai-context-body"><p>Sampled frames: ' + (Number(scan.frames_analyzed) || 0) + '</p>' + rows + '<p>' + escapeHtml(scan.note || '') + '</p></div></div>';
+  }
+  if (data.provenance) {
+    const provenance = data.provenance;
+    html += '<div class="ai-context-card"><div class="ai-context-header"><span>Content credentials / provenance</span></div><div class="ai-context-body"><p>Status: ' + escapeHtml(provenance.status || 'unknown') + (provenance.claim_generator ? ' · Claim generator: ' + escapeHtml(provenance.claim_generator) : '') + '</p><p>' + escapeHtml(provenance.note || '') + '</p></div></div>';
   }
 
   // 10. Recommendations & Containment Next Steps
@@ -1381,6 +1402,37 @@ function buildReportSummaryText(report) {
     'Next Steps:',
     ...(report.recommendations?.map(r => `→ ${r}`) || [])
   ].filter(Boolean).join('\n');
+}
+
+async function runEmailExposureCheck(event) {
+  event.preventDefault();
+  const button = $('#exposure-submit');
+  const result = $('#exposure-result');
+  const email = $('#exposure-email').value.trim();
+  if (!$('#exposure-consent').checked) return;
+  button.disabled = true;
+  button.textContent = 'Checking provider records…';
+  result.textContent = 'Sending one consented lookup request. The address is not added to local audit history.';
+  try {
+    const response = await fetch('/api/analyze/email-exposure', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, consent: true })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.detail || 'The lookup could not be completed.');
+    let content = data.found ? 'Found ' + data.breaches.length + ' known breach record(s).\n' : 'No matching record was returned by this provider.\n';
+    content += data.breaches.map(function(item) {
+      return '• ' + (item.title || item.name || 'Breach') + ' — ' + (item.breach_date || 'date unavailable') + '; exposed data: ' + ((item.data_classes || []).join(', ') || 'not specified');
+    }).join('\n');
+    content += '\n\n' + (data.note || '') + '\nSource: ' + (data.source || 'Have I Been Pwned');
+    result.textContent = content;
+  } catch (error) {
+    result.textContent = error.message;
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Check known breaches';
+  }
 }
 
 // --------------------------------------------------------------------------

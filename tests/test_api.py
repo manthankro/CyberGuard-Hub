@@ -123,3 +123,23 @@ def test_video_review_requires_consent_and_uses_gemini_observations(monkeypatch)
     result = response.json()
     assert result["visual_review"]["provider"] == "Gemini"
     assert "not a deepfake/authenticity verdict" in result["visual_review"]["label"]
+
+
+def test_email_exposure_requires_explicit_consent():
+    response = client.post("/api/analyze/email-exposure", json={"email": "person@example.test", "consent": False})
+    assert response.status_code == 400
+    assert "consent" in response.json()["detail"].lower()
+
+
+def test_email_exposure_returns_scoped_provider_result(monkeypatch):
+    from app import main
+
+    monkeypatch.setattr(main.settings, "hibp_api_key", "test-key")
+    monkeypatch.setattr(
+        main, "check_email_breaches",
+        lambda email, key: {"found": False, "breaches": [], "source": "Have I Been Pwned", "note": "Known dataset only."},
+    )
+    response = client.post("/api/analyze/email-exposure", json={"email": "person@example.test", "consent": True})
+    assert response.status_code == 200
+    assert response.json()["found"] is False
+    assert "email" not in response.json()

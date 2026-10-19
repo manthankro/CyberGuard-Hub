@@ -47,9 +47,11 @@ This repository includes the FastAPI entrypoint Vercel detects at `app/index.py`
 1. Import `manthankro/CyberGuard-Hub` into Vercel and keep the project root at the repository root.
 2. In **Project Settings → Environment Variables**, add `GROQ_API_KEY` with your Groq key. Add it to Production and Preview if both should use AI explanations. Keep the key out of GitHub and browser code.
 3. If `GROQ_MODEL` already exists in Vercel, set it to `openai/gpt-oss-120b` or remove it to use the app default. The UI shows whether a key is configured, and a report shows whether Groq actually returned an explanation.
-4. Deploy or redeploy, then open `/health`. It should return `status: ok`, `providers.groq: true`, and `max_upload_mb: 4`. If the key was added after an earlier deployment, redeploy so the new environment value is applied.
+4. Add optional `SIGHTENGINE_API_USER`, `SIGHTENGINE_API_SECRET`, and `HIBP_API_KEY` secrets if you want the video model scan and email breach lookup. Redeploy and open `/health`. Vercel caps media uploads at 4 MB; longer video scans may exceed serverless time limits, so use the Docker/Render deployment for more reliable video processing.
 
-Vercel Functions limit request bodies to 4.5 MB, so media uploads are capped at 4 MB on Vercel (including multipart overhead). Other hosts use `MAX_UPLOAD_MB`. Optional Gemini media observations support common images and MP4/WebM/QuickTime videos under the upload limit, require `GEMINI_API_KEY`, and require explicit user opt-in. They describe media; they do not determine whether it is authentic or a deepfake.
+Vercel Functions limit request bodies to 4.5 MB, so media uploads are capped at 4 MB on Vercel (including multipart overhead). Other hosts use `MAX_UPLOAD_MB`. Optional Gemini media observations require `GEMINI_API_KEY` and explicit opt-in; they describe media and do not determine authenticity. For video AI-generated/deepfake signals, set `SIGHTENGINE_API_USER` and `SIGHTENGINE_API_SECRET`; the user must separately opt in on the upload form. Sightengine's synchronous video scan is intended for short clips under 60 seconds. Video scores are sampled-frame model probabilities, not forensic proof, and cannot identify the original upload source. Where a valid C2PA manifest is embedded and supported, its signed provenance claims are shown separately; missing credentials do not mean authentic or fake.
+
+The Email Exposure page requires `HIBP_API_KEY`. It sends the entered address to Have I Been Pwned only after explicit user consent and queries that provider's known breach dataset. It is not a comprehensive or live dark-web search. No email is saved to browser history.
 
 ## Deploy on Render
 
@@ -57,7 +59,7 @@ The GitHub repository is [manthankro/CyberGuard-Hub](https://github.com/manthank
 
 1. In Render, select **New + → Blueprint** and connect the repository.
 2. Render reads `render.yaml` and builds the included Dockerfile.
-3. Add `GROQ_API_KEY` and/or `GEMINI_API_KEY` in the service's secret environment variables if you want optional AI explanations. Gemini is also required for explicitly opted-in image/video observations. The blueprint prompts for both as optional secrets.
+3. Add `GROQ_API_KEY` and/or `GEMINI_API_KEY` for optional AI explanations. Add `SIGHTENGINE_API_USER` + `SIGHTENGINE_API_SECRET` for the consent-based video model scan, and `HIBP_API_KEY` for email breach lookup. Gemini is only for opted-in media description, not authenticity detection. The blueprint requests all optional secrets.
 4. Deploy and verify `/health`, then open the service URL.
 
 The container binds to Render's `PORT`; `/health` is configured as the service health check. Any Docker-capable host can use the same image. The free Render service can sleep while idle.
@@ -68,7 +70,8 @@ The container binds to Render's `PORT`; `/health` is configured as the service h
 - `POST /api/analyze/text` — `{"text":"..."}`
 - `POST /api/analyze/url` — `{"url":"https://..."}`
 - `POST /api/analyze/code` — `{"code":"..."}`
-- `POST /api/analyze/media` — multipart fields `file` and optional `ai_visual_review=false`; set the latter to `true` only when you consent to send a supported image or video to Gemini. The optional review supports images and MP4/WebM/QuickTime video and is not a deepfake verdict.
+- `POST /api/analyze/media` — multipart fields `file`, optional `ai_visual_review=false`, and `ai_authenticity_scan=false`. The video model scan is video-only, requires Sightengine credentials, and must be opted in by the user. Gemini observations are separate and are not a deepfake verdict.
+- `POST /api/analyze/email-exposure` — JSON `{\"email\":\"you@example.com\",\"consent\":true}`; requires `HIBP_API_KEY` and explicit consent.
 - `GET /api/modules`
 - `GET /api/rules` — transparent heuristic catalog with rule IDs, descriptions, and mitigations
 - `GET /health`

@@ -12,6 +12,7 @@ from app.analyzers.url import analyze_url, check_domain_status
 from app.analyzers.code import analyze_code
 from app.analyzers.media import inspect_media
 from app.analyzers.triage import analyze_triage
+from app.analyzers.external import inspect_c2pa, scan_video_authenticity, check_email_breaches
 from app.llm import explain_findings, provider_status, review_media_observations
 
 app=FastAPI(title=settings.app_name,version="1.1.0",description="Evidence-led digital safety workspace")
@@ -22,6 +23,9 @@ class TextRequest(BaseModel): text: str=Field(min_length=3,max_length=12000)
 class URLRequest(BaseModel): url: str=Field(min_length=3,max_length=2048)
 class CodeRequest(BaseModel): code: str=Field(min_length=3,max_length=30000)
 class TriageRequest(BaseModel): content: str=Field(min_length=3,max_length=12000)
+class EmailExposureRequest(BaseModel):
+    email: str=Field(min_length=6,max_length=254)
+    consent: bool
 
 @app.middleware("http")
 async def security_headers(request, call_next):
@@ -41,7 +45,7 @@ def upload_limit_mb() -> int:
 
 @app.get("/health")
 def health():
-    return {"status":"ok","providers":provider_status(),"version":app.version,"max_upload_mb":upload_limit_mb(),"groq_model":settings.groq_model,"gemini_model":settings.gemini_model,"ai_provider_order":provider_status()["order"]}
+    return {"status":"ok","providers":provider_status(),"version":app.version,"max_upload_mb":upload_limit_mb(),"groq_model":settings.groq_model,"gemini_model":settings.gemini_model,"ai_provider_order":provider_status()["order"],"video_authenticity_configured":bool(settings.sightengine_api_user and settings.sightengine_api_secret),"email_exposure_configured":bool(settings.hibp_api_key)}
 from app.analyzers.text import PATTERNS as TEXT_PATTERNS
 from app.analyzers.code import RULES as CODE_RULES
 
@@ -115,7 +119,7 @@ def code_scan(request:CodeRequest):
     result["analysis_mode"]=f"static rules + {result['ai_provider']} explanation" if result["ai_provider"] else "local static rules"
     return result
 @app.post("/api/analyze/media")
-async def media_scan(file:UploadFile=File(...), ai_visual_review:bool=Form(False)):
+async def media_scan(file:UploadFile=File(...), ai_visual_review:bool=Form(False), ai_authenticity_scan:bool=Form(False)):
     limit=upload_limit_mb()*1024*1024
     data=await file.read(limit+1)
     if len(data)>limit: raise HTTPException(status_code=413,detail=f"File exceeds {upload_limit_mb()} MB limit")
@@ -124,6 +128,17 @@ async def media_scan(file:UploadFile=File(...), ai_visual_review:bool=Form(False
     if not (mime.startswith("image/") or mime.startswith("video/") or mime.startswith("audio/")):
         raise HTTPException(status_code=415,detail="Upload an image, audio, or video file")
     result=inspect_media(data,file.filename or "upload",mime)
+    if mime.startswith("video/"):
+        result["provenance"] = inspect_c2pa(data, mime)
+    if ai_authenticity_scan:
+        if not mime.startswith("video/"):
+            raise HTTPException(status_code=422,detail="AI-generated/deepfake model scan supports video files only.")
+        try:
+            result["authenticity_scan"] = await run_in_threadpool(scan_video_authenticity,data,file.filename or "upload",mime,settings.sightengine_api_user,settings.sightengine_api_secret)
+        except ValueError as exc:
+            raise HTTPException(status_code=503,detail=str(exc))
+        except RuntimeError as exc:
+            raise HTTPException(status_code=502,detail=str(exc))
     if ai_visual_review:
         if not (mime.startswith("image/") or mime.startswith("video/")):
             raise HTTPException(status_code=422,detail="Optional Gemini observations support images and videos.")
@@ -142,3 +157,16 @@ async def media_scan(file:UploadFile=File(...), ai_visual_review:bool=Form(False
         else:
             result["visual_review"]={"provider":None,"observations":"The optional Gemini review is temporarily unavailable. Local file inspection is still available.","label":"No AI media observations returned"}
     return result
+
+
+@app.post("/api/analyze/email-exposure")
+async def email_exposure(request: EmailExposureRequest):
+    if not request.consent:
+        raise HTTPException(status_code=400, detail="Explicit consent is required before sending this email address to Have I Been Pwned.")
+    try:
+        return await run_in_threadpool(check_email_breaches, request.email, settings.hibp_api_key)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    except RuntimeError as exc:
+        status = 503 if "not configured" in str(exc) else 502
+        raise HTTPException(status_code=status, detail=str(exc))
