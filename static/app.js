@@ -899,6 +899,7 @@ function renderEvidenceReport(data, rawInput) {
   if (data.authenticity_scan) {
     const scan = data.authenticity_scan;
     const formatProbability = function(value) {
+      if (value === null || value === undefined || value === '') return 'not reported';
       const number = Number(value);
       return Number.isFinite(number) ? Math.round(number * 100) + '%' : 'not reported';
     };
