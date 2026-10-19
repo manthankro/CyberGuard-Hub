@@ -76,9 +76,9 @@ def test_valid_image_returns_metadata_and_fingerprint():
         body = kind + payload
         return struct.pack(">I", len(payload)) + body + struct.pack(">I", zlib.crc32(body) & 0xFFFFFFFF)
 
-    image = b"\\x89PNG\\r\\n\\x1a\\n"
-    image += chunk(b"IHDR", struct.pack(">IIBBBBB", 2, 2, 8, 2, 0, 0, 0))
-    image += chunk(b"IDAT", zlib.compress(b"\\x00\\x14\\x50\\x78\\x14\\x50\\x78"))
+    image = b"\x89PNG\r\n\x1a\n"
+    image += chunk(b"IHDR", struct.pack(">IIBBBBB", 1, 1, 8, 2, 0, 0, 0))
+    image += chunk(b"IDAT", zlib.compress(b"\x00\x14\x50\x78"))
     image += chunk(b"IEND", b"")
     response = client.post(
         "/api/analyze/media",
@@ -87,5 +87,5 @@ def test_valid_image_returns_metadata_and_fingerprint():
     assert response.status_code == 200
     result = response.json()
     assert result["format"] == "PNG"
-    assert result["dimensions"] == {"width": 2, "height": 2}
+    assert result["dimensions"] == {"width": 1, "height": 1}
     assert len(result["sha256"]) == 64
