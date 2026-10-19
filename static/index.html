@@ -1,12 +1,78 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b1220"><title>CyberGuard Hub</title><link rel="stylesheet" href="/static/style.css"></head>
-<body><div class="shell"><aside class="sidebar"><a class="brand" href="/"><span class="brand-icon">◈</span><span>CyberGuard <small>HUB</small></span></a><div class="side-label">SECURITY TOOLS</div><button class="nav active" data-tab="text"><span>✳</span> Scam message</button><button class="nav" data-tab="url"><span>↗</span> Link scanner</button><button class="nav" data-tab="media"><span>◉</span> Media check</button><button class="nav" data-tab="code"><span>⌘</span> Code audit</button><div class="sidebar-bottom"><div class="online-dot"></div><span id="health">Checking service…</span><div class="side-footer">CYBERGUARD HUB <span>·</span> PREVIEW</div></div></aside>
-<main><header><div class="crumb">Workspace <span>/</span> <b id="crumb">Scam message</b></div><div class="track">NAVRATRI CODEATHON <span>·</span> DIGITAL SAFETY</div></header><section class="hero"><div class="eyebrow"><i></i> DIGITAL SAFETY WORKSPACE</div><h1>Pause. Check.<br><em>Stay protected.</em></h1><p>Investigate suspicious messages, links, media, and code with transparent signals and practical next steps.</p></section>
-<div class="grid"><section class="panel input-panel"><div class="panel-head"><div><div class="panel-kicker" id="kicker">MESSAGE INVESTIGATION</div><h2 id="title">Analyze a suspicious message</h2></div><span class="step">01 / INPUT</span></div>
-<div id="text-form" class="form-view"><label for="text-input">MESSAGE CONTENT</label><textarea id="text-input" placeholder="Paste an SMS, WhatsApp message, or email text here…"></textarea><div class="sample-row"><button class="sample" id="sample-text">↳ Try a sample</button><span>Text is analyzed for common pressure and credential cues.</span></div></div>
-<div id="url-form" class="form-view hidden"><label for="url-input">SUSPICIOUS URL</label><input id="url-input" placeholder="https://example.com/login"><div class="sample-row"><button class="sample" id="sample-url">↳ Try a sample</button><span>We inspect the text only and never open the link.</span></div></div>
-<div id="media-form" class="form-view hidden"><label>IMAGE, AUDIO, OR VIDEO FILE</label><label class="drop" for="media-input"><span class="upload-icon">↑</span><b id="file-label">Choose a file or drop it here</b><small>Maximum 10 MB · Common image, audio, and video formats</small><input id="media-input" type="file" accept="image/*,audio/*,video/*"></label><div class="notice">Media authenticity cannot be proven by this prototype. The report shows file and metadata clues only.</div></div>
-<div id="code-form" class="form-view hidden"><label for="code-input">SOURCE CODE / SMART CONTRACT</label><textarea class="code" id="code-input" placeholder="Paste code for lightweight static checks…"></textarea><div class="sample-row"><button class="sample" id="sample-code">↳ Try a sample</button><span>Rule-based checks; review results before relying on them.</span></div></div>
-<button class="primary" id="analyze"><span id="button-text">Analyze message</span><span>→</span></button><p class="privacy">⌑ &nbsp;Your input is processed for this request and is not saved by this app.</p></section>
-<section class="panel results"><div class="panel-head"><div><div class="panel-kicker">ANALYSIS REPORT</div><h2>What we found</h2></div><span class="live"><i></i> READY</span></div><div id="empty" class="empty"><div class="scan-orb"><span>◈</span></div><b>Your report will appear here</b><p>Submit an item to see indicators, context, and recommended actions.</p></div><div id="output" class="hidden"></div></section></div>
-<footer><span>CyberGuard Hub <span>·</span> Built for safer digital habits</span><span>Always verify important requests independently.</span></footer></main></div><script src="/static/app.js" defer></script></body></html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#08111d"><meta name="description" content="A unified digital safety workspace for suspicious messages, links, media, and code.">
+<title>CyberGuard Hub — Digital Safety Workspace</title><link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <a class="brand" href="#dashboard" aria-label="CyberGuard Hub home"><span class="brand-mark">◈</span><span class="brand-name">CyberGuard<span>HUB</span></span></a>
+    <div class="workspace-tag">PERSONAL WORKSPACE</div>
+    <nav class="main-nav" aria-label="Main navigation">
+      <button class="nav-item active" data-page="dashboard"><span class="nav-icon">⌂</span><span>Overview</span></button>
+      <div class="nav-section">INVESTIGATE</div>
+      <button class="nav-item" data-page="triage"><span class="nav-icon">✳</span><span>Smart triage</span><span class="nav-badge">NEW</span></button>
+      <button class="nav-item" data-page="text"><span class="nav-icon">▤</span><span>Scam message</span></button>
+      <button class="nav-item" data-page="url"><span class="nav-icon">↗</span><span>Link scanner</span></button>
+      <button class="nav-item" data-page="media"><span class="nav-icon">◉</span><span>Media check</span></button>
+      <button class="nav-item" data-page="code"><span class="nav-icon">⌘</span><span>Code audit</span></button>
+      <div class="nav-section history-nav-label">WORKSPACE</div>
+      <button class="nav-item" data-page="history"><span class="nav-icon">◷</span><span>Scan history</span><span id="history-count" class="count-badge">0</span></button>
+    </nav>
+    <div class="sidebar-spacer"></div>
+    <div class="side-status"><span class="status-dot"></span><span><b id="service-status">Connecting…</b><small id="model-status">Checking analysis services</small></span></div>
+    <div class="sidebar-footer"><span>CYBERGUARD HUB</span><span class="version-pill">BETA</span></div>
+  </aside>
+
+  <main class="main-area">
+    <header class="topbar"><div class="breadcrumbs"><span>Workspace</span><i>/</i><b id="breadcrumb-current">Overview</b></div><div class="topbar-right"><span class="track-label"><span></span>NAVRATRI CODEATHON · DIGITAL SAFETY</span><button class="icon-button" id="privacy-info" aria-label="Privacy information" title="Privacy information">ⓘ</button><button class="avatar" title="CyberGuard workspace">CG</button></div></header>
+
+    <section id="page-dashboard" class="page active-page">
+      <div class="welcome-row"><div><div class="overline"><span class="pulse-dot"></span> YOUR DIGITAL SAFETY DESK</div><h1>Pause. Check.<br><em>Stay protected.</em></h1><p class="lead">One workspace to investigate suspicious messages, links, media, and code—with clear evidence and practical next steps.</p></div><div class="welcome-art"><div class="art-ring ring-one"></div><div class="art-ring ring-two"></div><div class="shield">◈</div><span class="art-spark spark-a">✦</span><span class="art-spark spark-b">·</span><span class="art-spark spark-c">+</span></div></div>
+      <div class="dashboard-grid">
+        <section class="feature-card"><div class="feature-copy"><div class="feature-eyebrow"><span class="feature-star">✳</span> START WITH A MESSAGE</div><h2>Something feels off?</h2><p>Check the message and its links together. Smart triage connects language cues to suspicious destinations in one report.</p><button class="button button-primary" data-go="triage">Run smart triage <span>→</span></button></div><div class="feature-visual"><div class="message-float"><span class="msg-avatar">!</span><span><b>Account alert</b><small>Urgent · Verify now…</small></span><span class="tiny-alert">!</span></div><div class="connector">··········</div><div class="risk-float"><span>◈</span><b>2 signals<br><small>linked together</small></b></div></div></section>
+        <section class="stats-row"><article class="stat-card"><div class="stat-label">ANALYSES ON THIS DEVICE</div><div class="stat-value" id="stat-scans">0</div><div class="stat-foot">Saved only in this browser</div></article><article class="stat-card"><div class="stat-label">HIGH SIGNAL REPORTS</div><div class="stat-value" id="stat-high">0</div><div class="stat-foot">Review your recent findings</div></article><article class="stat-card"><div class="stat-label">TOOLS IN YOUR WORKSPACE</div><div class="stat-value">05</div><div class="stat-foot">Four analyzers + smart triage</div></article></section>
+      </div>
+      <div class="section-heading"><div><div class="overline">YOUR TOOLKIT</div><h2>Investigate with clarity</h2></div><span class="section-note">Each tool shows its evidence and limits.</span></div>
+      <div class="tool-grid">
+        <button class="tool-card" data-go="text"><span class="tool-icon icon-coral">▤</span><span class="tool-card-copy"><b>Scam message</b><small>Find pressure, OTP, payment, and impersonation cues.</small></span><span class="card-arrow">↗</span></button>
+        <button class="tool-card" data-go="url"><span class="tool-icon icon-blue">↗</span><span class="tool-card-copy"><b>Link scanner</b><small>Inspect suspicious URL patterns without opening the link.</small></span><span class="card-arrow">↗</span></button>
+        <button class="tool-card" data-go="media"><span class="tool-icon icon-violet">◉</span><span class="tool-card-copy"><b>Media check</b><small>Review file properties and available image metadata.</small></span><span class="card-arrow">↗</span></button>
+        <button class="tool-card" data-go="code"><span class="tool-icon icon-amber">⌘</span><span class="tool-card-copy"><b>Code audit</b><small>Spot selected code risks with line references and fixes.</small></span><span class="card-arrow">↗</span></button>
+      </div>
+      <div class="section-heading recent-heading"><div><div class="overline">ON THIS DEVICE</div><h2>Recent investigations</h2></div><button class="text-button" data-go="history">View history <span>→</span></button></div>
+      <div id="dashboard-recent" class="recent-list"></div>
+      <div class="trust-strip"><span class="trust-icon">⌑</span><span><b>Privacy by design</b><small>Submitted content is analyzed for your request. Only a short report is saved in this browser; the original text or code is not stored.</small></span><button id="privacy-details" class="text-button">How it works</button></div>
+    </section>
+
+    <section id="page-investigate" class="page">
+      <div class="page-intro"><div class="overline"><span class="pulse-dot"></span><span id="tool-overline">MESSAGE TRIAGE</span></div><h1 id="tool-title">A clearer picture,<br><em>in one scan.</em></h1><p id="tool-description">Paste a suspicious message. CyberGuard checks its language and any embedded links together.</p></div>
+      <div class="tool-tabs" role="tablist"><button data-tool="triage" class="tool-tab active">✳ <span>Smart triage</span></button><button data-tool="text" class="tool-tab">▤ <span>Message</span></button><button data-tool="url" class="tool-tab">↗ <span>Link</span></button><button data-tool="media" class="tool-tab">◉ <span>Media</span></button><button data-tool="code" class="tool-tab">⌘ <span>Code</span></button></div>
+      <div class="investigation-layout">
+        <section class="work-card input-card"><div class="card-heading"><div><div class="overline" id="input-kicker">INVESTIGATION INPUT</div><h2 id="input-heading">Check a message and its links</h2></div><span class="step-chip">01 <i>/</i> INPUT</span></div>
+          <div id="form-triage" class="form-view"><label for="triage-input">MESSAGE, SMS, EMAIL, OR CHAT</label><textarea id="triage-input" class="large-input" placeholder="Paste the suspicious message here…"></textarea><div class="inline-help"><button class="sample-button" id="sample-triage">↳ Load demo example</button><span>Embedded links are inspected as text; they are never opened.</span></div></div>
+          <div id="form-text" class="form-view hidden"><label for="text-input">MESSAGE CONTENT</label><textarea id="text-input" class="large-input" placeholder="Paste an SMS, chat, or email…"></textarea><div class="inline-help"><button class="sample-button" id="sample-text">↳ Load demo example</button><span>Includes selected English, Hindi, and Gujarati patterns.</span></div></div>
+          <div id="form-url" class="form-view hidden"><label for="url-input">SUSPICIOUS URL</label><input id="url-input" class="single-input" placeholder="https://example.com/login"><div class="inline-help"><button class="sample-button" id="sample-url">↳ Load demo example</button><span>This tool checks URL text and makes no network request.</span></div></div>
+          <div id="form-media" class="form-view hidden"><label>IMAGE, AUDIO, OR VIDEO FILE</label><label class="drop-zone" for="media-input"><span class="upload-mark">↑</span><b id="file-label">Choose a file to inspect</b><small>Images, audio, or video · 10 MB maximum</small><input id="media-input" type="file" accept="image/*,audio/*,video/*"></label><div class="caution-note"><span>i</span><span>This prototype does not identify deepfakes. It reports file properties and image metadata only.</span></div></div>
+          <div id="form-code" class="form-view hidden"><label for="code-input">SOURCE CODE OR SMART CONTRACT</label><textarea id="code-input" class="large-input code-input" placeholder="Paste a code sample to inspect…"></textarea><div class="inline-help"><button class="sample-button" id="sample-code">↳ Load demo example</button><span>Selected pattern checks, not a full compiler or security audit.</span></div></div>
+          <button class="button button-primary run-button" id="analyze-button"><span id="analyze-label">Analyze message</span><span>→</span></button><div class="privacy-line"><span>⌑</span> Input is not stored in the browser history.</div>
+        </section>
+        <section class="work-card report-card"><div class="card-heading"><div><div class="overline">EVIDENCE-LED REPORT</div><h2>Findings & next steps</h2></div><span id="report-state" class="report-state"><i></i> READY</span></div><div id="report-placeholder" class="report-placeholder"><div class="report-orbit"><span>◈</span><i></i></div><b>Your report will appear here</b><p>Run an analysis to see the signals, plain-language context, and suggested actions.</p><div class="placeholder-rule"></div><small>LOWER SCORES DO NOT PROVE AN ITEM IS SAFE</small></div><div id="report-output" class="report-output hidden"></div><div id="report-actions" class="report-actions hidden"><button id="copy-report" class="button button-secondary">▣ Copy summary</button><button id="download-report" class="button button-secondary">↓ Export JSON</button><button id="print-report" class="button button-quiet">Print / PDF</button></div></section>
+      </div>
+      <div class="method-banner"><span class="method-icon">✦</span><span><b>Designed to show its work</b><small>Rules create the initial findings. Gemini, when configured, can explain those findings but cannot verify them. Scores are indicator scores—not probabilities.</small></span><a href="/docs" target="_blank" rel="noreferrer">API details ↗</a></div>
+    </section>
+
+    <section id="page-history" class="page">
+      <div class="page-intro history-intro"><div class="overline">PRIVATE TO THIS BROWSER</div><h1>Your investigation<br><em>history.</em></h1><p>Only short report summaries are stored here. Your original text, links, uploads, and code are not saved.</p></div>
+      <div class="history-toolbar"><div class="search-wrap"><span>⌕</span><input id="history-search" placeholder="Search reports or tool names…"></div><select id="history-filter" aria-label="Filter by risk"><option value="all">All risk levels</option><option value="high">High signals</option><option value="medium">Medium signals</option><option value="low">Low signals</option></select><button id="clear-history" class="button button-quiet">Clear history</button></div>
+      <div id="history-list" class="history-list"></div>
+    </section>
+
+    <footer class="app-footer"><span>CyberGuard Hub <i>·</i> Built for safer digital habits</span><span>Always verify important requests independently.</span></footer>
+  </main>
+</div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<div id="privacy-modal" class="modal-backdrop hidden"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="privacy-title"><button id="close-privacy" class="modal-close" aria-label="Close">×</button><div class="overline">YOUR DATA, YOUR DEVICE</div><h2 id="privacy-title">A simple privacy promise</h2><p>CyberGuard analyzes the item you submit to generate a report. It does not store the original message, link, file, or code in an app database.</p><p>For your history, this browser saves only a short report locally. Clearing browser storage removes it. If Groq or Gemini is enabled, the service sends sanitized finding labels—not the original submitted content—to that provider for an optional explanation.</p><div class="caution-note"><span>i</span><span>Avoid submitting secrets, credentials, private files, or personal data. This is a hackathon prototype, not a secure incident-response service.</span></div><button id="privacy-ok" class="button button-primary">Got it</button></section></div>
+<script src="/static/app.js" defer></script>
+</body></html>
