@@ -12,7 +12,7 @@ from app.analyzers.url import analyze_url, check_domain_status
 from app.analyzers.code import analyze_code
 from app.analyzers.media import inspect_media
 from app.analyzers.triage import analyze_triage
-from app.llm import explain_findings, provider_status, review_image_visual_clues
+from app.llm import explain_findings, provider_status, review_media_observations
 
 app=FastAPI(title=settings.app_name,version="1.1.0",description="Evidence-led digital safety workspace")
 STATIC=Path(__file__).resolve().parent.parent/"static"
@@ -125,17 +125,20 @@ async def media_scan(file:UploadFile=File(...), ai_visual_review:bool=Form(False
         raise HTTPException(status_code=415,detail="Upload an image, audio, or video file")
     result=inspect_media(data,file.filename or "upload",mime)
     if ai_visual_review:
-        if not mime.startswith("image/"):
-            raise HTTPException(status_code=422,detail="Optional Gemini visual review is available for images only")
+        if not (mime.startswith("image/") or mime.startswith("video/")):
+            raise HTTPException(status_code=422,detail="Optional Gemini observations support images and videos.")
         if not settings.gemini_api_key:
-            raise HTTPException(status_code=503,detail="Add GEMINI_API_KEY on the server to enable optional visual review. Local file inspection is available without it.")
-        if result.get("format"):
-            actual_mime={"JPEG":"image/jpeg","PNG":"image/png","WEBP":"image/webp","GIF":"image/gif","BMP":"image/bmp","TIFF":"image/tiff"}.get(result["format"])
+            raise HTTPException(status_code=503,detail="Add GEMINI_API_KEY on the server to enable optional media observations. Local file inspection is available without it.")
+        if mime.startswith("image/"):
+            actual_mime={"JPEG":"image/jpeg","PNG":"image/png","WEBP":"image/webp","GIF":"image/gif","BMP":"image/bmp","TIFF":"image/tiff"}.get(result.get("format"))
             if not actual_mime:
-                raise HTTPException(status_code=415,detail="This image format is not supported for optional visual review")
-            observation,provider=await run_in_threadpool(review_image_visual_clues,data,actual_mime)
-            if observation:
-                result["visual_review"]={"provider":provider,"observations":observation,"label":"AI-assisted visual observations · not a deepfake/authenticity verdict"}
-            else:
-                result["visual_review"]={"provider":None,"observations":"The optional visual review is temporarily unavailable. The local file inspection is still available.","label":"No AI visual observations returned"}
+                raise HTTPException(status_code=415,detail="This image format is not supported for optional Gemini observations")
+            mime=actual_mime
+        elif mime not in {"video/mp4","video/webm","video/quicktime"}:
+            raise HTTPException(status_code=415,detail="Optional Gemini observations support MP4, WebM, and QuickTime videos")
+        observation,provider=await run_in_threadpool(review_media_observations,data,mime)
+        if observation:
+            result["visual_review"]={"provider":provider,"observations":observation,"label":"AI-assisted media observations · not a deepfake/authenticity verdict"}
+        else:
+            result["visual_review"]={"provider":None,"observations":"The optional Gemini review is temporarily unavailable. Local file inspection is still available.","label":"No AI media observations returned"}
     return result
