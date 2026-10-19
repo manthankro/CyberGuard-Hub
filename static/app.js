@@ -345,6 +345,12 @@ function setupEvents() {
   $('#download-md-report')?.addEventListener('click', exportReportMarkdown);
   $('#print-report')?.addEventListener('click', () => window.print());
 
+  $('#report-output')?.addEventListener('click', event => {
+    const action = event.target.closest('[data-safety-card-action]')?.dataset.safetyCardAction;
+    if (action === 'copy') copyFamilySafetyCard();
+    if (action === 'download') downloadFamilySafetyCard();
+  });
+
   // History Actions
   $('#history-search')?.addEventListener('input', renderHistoryPage);
   $('#history-filter')?.addEventListener('change', renderHistoryPage);
@@ -705,6 +711,10 @@ function renderEvidenceReport(data, rawInput) {
     `;
   }
 
+  if (currentTool === 'text' || currentTool === 'triage') {
+    html += renderFamilySafetyCard(data, rawInput);
+  }
+
   // 4. URL Structural Component Breakdown
   if (data.components) {
     const c = data.components;
@@ -890,6 +900,147 @@ function renderEvidenceReport(data, rawInput) {
   }
 
   $('#report-output').innerHTML = html;
+}
+
+function getSafetyCardLanguage(text) {
+  if (/[\u0A80-\u0AFF]/.test(text)) return 'gu';
+  if (/[\u0900-\u097F]/.test(text)) return 'hi';
+  return 'en';
+}
+
+function getSafetyCardModel(report, sourceText) {
+  const lang = getSafetyCardLanguage(sourceText || '');
+  const copy = {
+    en: {
+      title: 'Scam Pause · Family Help Card',
+      subtitle: 'A message raised caution signals. Share this summary with someone you trust and verify together.',
+      ask: 'Possible request suggested by the signals',
+      cues: 'Signals to discuss',
+      steps: 'Safer next steps',
+      noCues: 'No selected scam patterns matched. That does not prove the message is safe.',
+      footer: 'This card leaves out the original message, links, phone numbers, and account details. Pattern checks can be wrong; verify independently.',
+      urgency: 'Pressure to act quickly', credential: 'Request for an OTP or secret',
+      payment: 'Payment, prize, or refund language', link: 'A link is included',
+      authority: 'An organisation is claimed', generic: 'Unusual message patterns',
+      asks: {
+        credential: 'It may be asking for a one-time code or other secret.',
+        payment: 'It may be asking for money or offering an unexpected reward.',
+        link: 'It may be encouraging you to open a link or sign in.',
+        authority: 'It may be asking you to trust an unverified sender.',
+        generic: 'The intent is unclear. Check with someone you trust before acting.'
+      },
+      actions: ['Do not share codes, passwords, PINs, or payment details.', 'Contact the claimed organisation using a number or app you already trust.', 'If a link is present, do not open it; visit the official site yourself.', 'Show this card to someone you trust and decide together.']
+    },
+    hi: {
+      title: 'Scam Pause · परिवार सहायता कार्ड',
+      subtitle: 'संदेश में सावधानी के संकेत मिले। यह सार किसी भरोसेमंद व्यक्ति को दिखाकर साथ जाँचें।',
+      ask: 'संकेतों से संभावित अनुरोध', cues: 'चर्चा के लिए संकेत', steps: 'सुरक्षित अगले कदम',
+      noCues: 'चुने गए धोखाधड़ी संकेत नहीं मिले। इसका अर्थ यह नहीं कि संदेश सुरक्षित है।',
+      footer: 'इस कार्ड में मूल संदेश, लिंक, फ़ोन नंबर या खाते की जानकारी शामिल नहीं है। संकेत गलत हो सकते हैं; अलग से पुष्टि करें।',
+      urgency: 'जल्दी कार्रवाई का दबाव', credential: 'OTP या गुप्त जानकारी माँगना',
+      payment: 'भुगतान, इनाम या रिफंड की बात', link: 'संदेश में लिंक है',
+      authority: 'किसी संस्था का दावा', generic: 'संदेश में असामान्य पैटर्न',
+      asks: {
+        credential: 'यह OTP या कोई अन्य गुप्त जानकारी माँग सकता है।',
+        payment: 'यह पैसे माँग सकता है या अचानक इनाम देने का दावा कर सकता है।',
+        link: 'यह लिंक खोलने या साइन इन करने के लिए कह सकता है।',
+        authority: 'यह किसी अप्रमाणित भेजने वाले पर भरोसा करने को कह सकता है।',
+        generic: 'इरादा स्पष्ट नहीं है। कार्रवाई से पहले किसी भरोसेमंद व्यक्ति से जाँचें।'
+      },
+      actions: ['OTP, पासवर्ड, PIN या भुगतान जानकारी साझा न करें।', 'संस्था से पहले से भरोसेमंद नंबर या ऐप से संपर्क करें।', 'लिंक हो तो न खोलें; आधिकारिक वेबसाइट स्वयं खोलें।', 'यह कार्ड किसी भरोसेमंद व्यक्ति को दिखाकर साथ में निर्णय लें।']
+    },
+    gu: {
+      title: 'Scam Pause · પરિવાર સહાય કાર્ડ',
+      subtitle: 'સંદેશમાં સાવચેતીના સંકેતો મળ્યા. આ સારાંશ વિશ્વાસુ વ્યક્તિને બતાવીને સાથે ચકાસો.',
+      ask: 'સંકેતો પરથી સંભવિત વિનંતી', cues: 'ચર્ચા કરવા જેવા સંકેતો', steps: 'સલામત આગળનાં પગલાં',
+      noCues: 'પસંદ કરેલા છેતરપિંડીના સંકેતો મળ્યા નથી. એથી સંદેશ સલામત સાબિત થતો નથી.',
+      footer: 'આ કાર્ડમાં મૂળ સંદેશ, લિંક્સ, ફોન નંબર કે ખાતાની વિગતો નથી. સંકેતો ખોટા હોઈ શકે; સ્વતંત્ર રીતે ચકાસો.',
+      urgency: 'ઝડપથી પગલું ભરવાનું દબાણ', credential: 'OTP અથવા ગુપ્ત માહિતીની વિનંતી',
+      payment: 'ચુકવણી, ઇનામ અથવા રિફંડની વાત', link: 'સંદેશમાં લિંક છે',
+      authority: 'સંસ્થાનો દાવો', generic: 'સંદેશમાં અસામાન્ય પેટર્ન',
+      asks: {
+        credential: 'તે OTP અથવા બીજી ગુપ્ત માહિતી માંગી શકે છે.',
+        payment: 'તે પૈસા માંગી શકે છે અથવા અણધાર્યા ઇનામની વાત કરી શકે છે.',
+        link: 'તે લિંક ખોલવા અથવા સાઇન ઇન કરવા પ્રેરિત કરી શકે છે.',
+        authority: 'તે અજાણ્યા મોકલનાર પર વિશ્વાસ કરવાનું કહી શકે છે.',
+        generic: 'હેતુ સ્પષ્ટ નથી. પગલું ભરતાં પહેલાં વિશ્વાસુ વ્યક્તિ સાથે ચકાસો.'
+      },
+      actions: ['OTP, પાસવર્ડ, PIN કે ચુકવણીની વિગતો શેર ન કરો.', 'સંસ્થાનો સંપર્ક પહેલાંથી વિશ્વાસુ નંબર અથવા એપથી કરો.', 'લિંક હોય તો ખોલશો નહીં; સત્તાવાર સાઇટ જાતે ખોલો.', 'આ કાર્ડ વિશ્વાસુ વ્યક્તિને બતાવીને સાથે નિર્ણય લો.']
+    }
+  }[lang];
+
+  const findings = report.findings || report.evidence || report.signals || [];
+  const ids = findings.map(item => String(item?.rule_id || '').toUpperCase());
+  const categories = findings.map(item => String(item?.category || item?.title || '').toLowerCase());
+  const has = (code, words) => ids.some(id => id.includes(code)) || categories.some(name => words.some(word => name.includes(word)));
+  const types = {
+    urgency: has('URGENCY', ['urgency', 'pressure', 'threat']),
+    credential: has('CREDENTIAL', ['credential', 'otp', 'password']),
+    payment: has('PRIZE', ['payment', 'prize', 'refund', 'financial']),
+    link: has('LINK', ['link', 'url']),
+    authority: has('IMPERSONATION', ['authority', 'organisation', 'impersonation'])
+  };
+  if (report.url_analyses?.length) types.link = true;
+  const matched = Object.keys(types).filter(key => types[key]);
+  const askType = types.credential ? 'credential' : types.payment ? 'payment' : types.link ? 'link' : types.authority ? 'authority' : 'generic';
+  const cues = matched.map(key => copy[key]);
+  if (!cues.length && findings.length) cues.push(copy.generic);
+  const actions = copy.actions.filter((_, index) => index === 0 || (index === 1 && (types.authority || findings.length > 0)) || (index === 2 && types.link) || index === 3);
+  return { copy, lang, cues, ask: copy.asks[askType], actions: actions.length ? actions : [copy.actions[1]] };
+}
+
+function renderFamilySafetyCard(report, sourceText) {
+  const model = getSafetyCardModel(report, sourceText);
+  const { copy } = model;
+  return `
+    <section class="family-safety-card" aria-labelledby="family-safety-title">
+      <div class="family-safety-card-head">
+        <div><span class="dossier-tag">SCAM PAUSE · SHAREABLE SUMMARY</span><h3 id="family-safety-title">${escapeHtml(copy.title)}</h3></div>
+        <span class="tag-pill">${escapeHtml(model.lang.toUpperCase())}</span>
+      </div>
+      <p class="family-safety-subtitle">${escapeHtml(copy.subtitle)}</p>
+      <div class="family-safety-block"><strong>${escapeHtml(copy.ask)}</strong><p>${escapeHtml(model.ask)}</p></div>
+      <div class="family-safety-block"><strong>${escapeHtml(copy.cues)}</strong>
+        ${model.cues.length ? `<ul>${model.cues.map(cue => `<li>${escapeHtml(cue)}</li>`).join('')}</ul>` : `<p>${escapeHtml(copy.noCues)}</p>`}
+      </div>
+      <div class="family-safety-block"><strong>${escapeHtml(copy.steps)}</strong><ol>${model.actions.map(action => `<li>${escapeHtml(action)}</li>`).join('')}</ol></div>
+      <p class="family-safety-privacy">${escapeHtml(copy.footer)}</p>
+      <div class="family-safety-actions"><button type="button" class="btn btn-secondary btn-sm" data-safety-card-action="copy">Copy help card</button><button type="button" class="btn btn-secondary btn-sm" data-safety-card-action="download">Download help card</button></div>
+    </section>`;
+}
+
+function getFamilySafetyCardText() {
+  if (!currentReport || !['text', 'triage'].includes(currentTool)) return '';
+  const inputId = currentTool === 'text' ? '#text-input' : '#triage-input';
+  const { copy, ask, cues, actions } = getSafetyCardModel(currentReport, $(inputId)?.value || '');
+  return [copy.title, copy.subtitle, '', `${copy.ask}: ${ask}`, `${copy.cues}:`, ...(cues.length ? cues.map(cue => `• ${cue}`) : [copy.noCues]), '', `${copy.steps}:`, ...actions.map((action, index) => `${index + 1}. ${action}`), '', copy.footer].join('\n');
+}
+
+async function copyFamilySafetyCard() {
+  const text = getFamilySafetyCardText();
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast('Privacy-safe help card copied. Original message was not included.');
+  } catch {
+    showToast('Clipboard unavailable. Use Download help card instead.', true);
+  }
+}
+
+function downloadFamilySafetyCard() {
+  const text = getFamilySafetyCardText();
+  if (!text) return;
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'cyberguard-family-help-card.txt';
+  link.hidden = true;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showToast('Privacy-safe help card downloaded. Original message was not included.');
 }
 
 function reportItems(data) {

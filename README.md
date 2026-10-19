@@ -14,6 +14,7 @@
 - **Code auditor (Module 4):** checks selected patterns for SQL/shell injection, hard-coded credentials, unsafe deserialization, dynamic code execution, XSS sinks, disabled TLS verification, and Solidity anti-patterns. Findings include rule IDs, line numbers, evidence, impact, and fixes. It is not a full parser.
 - **Media verification (Module 3):** inspects supported image signatures, MIME/extension mismatches, dimensions, metadata presence, and a SHA-256 file fingerprint. Damaged or unsupported image bytes return an explicit finding instead of a server parsing error. Audio/video uploads are hashed and sized but not parsed for authenticity. Optionally, after a separate unchecked consent box, a supported image can be sent to Gemini for visible inconsistency observations. This is not a forensic deepfake detector and never returns an authenticity verdict.
 - **Explainable cybersecurity:** findings include evidence, why a signal matters, and a next step. Scores are indicator scores—not probabilities. Optional Groq-first, Gemini-fallback text explanations receive sanitized labels, not the submitted message, source code, or full URL. The optional image review is a distinct opt-in and sends that selected image to Gemini. If providers are unavailable, local analysis still works.
+- **Scam Pause family help card:** after message or smart-triage analysis, the browser creates an English, Hindi, or Gujarati action card from matched signal categories. It explains the likely request and safer next steps. Copy/download includes only broad signal labels and guidance; it excludes the original text, links, phone numbers, and account details. It is a user-controlled local export, not automatic message forwarding.
 - **On-device report workspace:** scan history stores only short summaries and finding labels in this browser's local storage. It does not save original submitted content. Reports can be copied, exported as JSON, or printed/saved as PDF.
 - **Safety and privacy UI:** consistent module navigation, demo inputs, upload limits, clear risk semantics, and a privacy explainer.
 
@@ -78,6 +79,7 @@ The container binds to Render's `PORT`; `/health` is configured as the service h
 pip install -r requirements.txt
 pytest -q
 node --check static/app.js
+node --test tests/test_safety_card.cjs
 ```
 
 ## Safety, privacy, and disclosure
