@@ -2567,3 +2567,6 @@ button {
 .exposure-result { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0 20px 18px; padding: 16px; border-radius: 12px; background: rgba(8, 16, 29, .72); color: var(--text, #e8eef8); }
 .exposure-panel > .text-sub { padding: 0 20px 20px; line-height: 1.6; }
 .exposure-panel a { color: var(--cyan, #67e8f9); }
+
+.score-explainer { margin: 8px 0 0; color: var(--text-sub); font-size: .78rem; line-height: 1.5; }
+.score-explainer b { color: var(--text-main); }
