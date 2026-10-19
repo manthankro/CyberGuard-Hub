@@ -168,6 +168,9 @@ async def media_scan(file:UploadFile=File(...), ai_visual_review:bool=Form(False
 @app.post("/api/analyze/upi")
 def upi_scan(request: UPIRequest):
     result = analyze_upi(request.text)
+    result["risk_score"] = result["score"]
+    result["risk_level"] = result["severity"]
+    result["recommendations"] = [result["recommendation"]] if result.get("recommendation") else []
     result["ai_explanation"], result["ai_provider"] = explain_findings("UPI payment indicators", result)
     result["analysis_mode"] = f"UPI heuristics + {result['ai_provider']} explanation" if result.get("ai_provider") else "local UPI heuristics"
     return result
@@ -175,6 +178,9 @@ def upi_scan(request: UPIRequest):
 @app.post("/api/analyze/phone")
 def phone_scan(request: PhoneRequest):
     result = analyze_phone(request.text)
+    result["risk_score"] = result["score"]
+    result["risk_level"] = result["severity"]
+    result["recommendations"] = [result["recommendation"]] if result.get("recommendation") else []
     result["ai_explanation"], result["ai_provider"] = explain_findings("phone number indicators", result)
     result["analysis_mode"] = f"phone heuristics + {result['ai_provider']} explanation" if result.get("ai_provider") else "local phone heuristics"
     return result
