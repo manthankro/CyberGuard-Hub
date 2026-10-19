@@ -672,7 +672,7 @@ function renderEvidenceReport(data, rawInput) {
         </svg>
         <div class="gauge-score-value">
           <b>${score !== undefined ? score : '—'}</b>
-          <small>SCORE</small>
+          <small>SIGNAL / 100</small>
         </div>
       </div>
       <div class="gauge-verdict-col">
@@ -681,8 +681,9 @@ function renderEvidenceReport(data, rawInput) {
           ${data.analysis_mode ? `<span class="tag-pill">${escapeHtml(data.analysis_mode)}</span>` : ''}
         </div>
         <div class="verdict-desc">
-          ${score >= 55 ? 'High risk indicators detected. Treat content with caution.' : score >= 20 ? 'Elevated suspicion cues observed. Verify independently.' : 'Low configured heuristic matches. Note: absence of signals does not certify safety.'}
+          ${score >= 55 ? 'High risk indicators detected. Treat content with caution.' : score >= 20 ? 'Elevated suspicion cues observed. Verify independently.' : 'Few configured warning signals matched. This does not certify safety.'}
         </div>
+        <p class="score-explainer"><b>${score !== undefined ? "Signal score: " + score + "/100." : "No score was returned."}</b> Rule-based indicator points, not a probability or a definitive prediction. The score can miss scams and can flag legitimate content.</p>
       </div>
     </div>
   `;
@@ -1449,10 +1450,16 @@ function checkHealth() {
       const limitLabel = $('#upload-limit');
       if (limitLabel && Number.isFinite(data.max_upload_mb)) limitLabel.textContent = String(data.max_upload_mb);
       if (modelLabel) {
-        if (data.providers?.groq) {
-          modelLabel.textContent = 'Groq key set · local fallback ready';
+        const configured = [];
+        if (data.providers?.groq) configured.push('Groq');
+        if (data.providers?.gemini) configured.push('Gemini');
+        const missing = ['Groq', 'Gemini'].filter(name => !configured.includes(name));
+        if (configured.length && missing.length) {
+          modelLabel.textContent = configured.join(' + ') + ' configured · ' + missing.join(' + ') + ' key missing · local scores active';
+        } else if (configured.length) {
+          modelLabel.textContent = configured.join(' + ') + ' configured · local scores active';
         } else {
-          modelLabel.textContent = 'Local checks ready · no AI key';
+          modelLabel.textContent = 'No AI keys · local scores active';
         }
       }
     })
