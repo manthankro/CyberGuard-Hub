@@ -7,7 +7,11 @@ log=logging.getLogger(__name__)
 GROQ_URL="https://api.groq.com/openai/v1/chat/completions"
 
 def provider_status() -> dict:
-    return {"groq":bool(settings.groq_api_key),"gemini":bool(settings.gemini_api_key),"local_rules":True}
+    order = [item.strip().lower() for item in settings.ai_provider_order.split(",") if item.strip().lower() in {"groq", "gemini"}]
+    if not order:
+        order = ["groq", "gemini"]
+    return {"groq": bool(settings.groq_api_key), "gemini": bool(settings.gemini_api_key),
+            "local_rules": True, "order": order}
 
 def _safe_context(data: dict) -> dict:
     """Send finding labels rather than submitted text, code, full links, or file names."""
@@ -28,26 +32,36 @@ def _prompt(task: str, data: dict) -> str:
             f"Analysis type: {task}\nSanitized report: {json.dumps(_safe_context(data),ensure_ascii=False)}")
 
 def explain_findings(task: str, data: dict) -> tuple[str | None, str | None]:
-    """Use Groq first, Gemini as fallback, and local rules when both are unavailable."""
-    prompt=_prompt(task,data)
-    if settings.groq_api_key:
-        try:
-            response=httpx.post(GROQ_URL,headers={"Authorization":f"Bearer {settings.groq_api_key}","Content-Type":"application/json"},json={"model":settings.groq_model,"temperature":0.2,"max_tokens":180,"messages":[{"role":"system","content":"You are a cautious cyber-safety explainer."},{"role":"user","content":prompt}]},timeout=18)
-            response.raise_for_status()
-            text=response.json()["choices"][0]["message"]["content"].strip()
-            if text: return text,"Groq"
-        except Exception as exc:
-            log.warning("Groq explanation unavailable (%s)",type(exc).__name__)
-    if settings.gemini_api_key:
-        try:
-            from google import genai
-            client=genai.Client(api_key=settings.gemini_api_key)
-            response=client.models.generate_content(model=settings.gemini_model,contents=prompt)
-            text=(response.text or "").strip()
-            if text: return text,"Gemini"
-        except Exception as exc:
-            log.warning("Gemini explanation unavailable (%s)",type(exc).__name__)
-    return None,None
+    """Try configured providers in order; local rules remain authoritative."""
+    prompt = _prompt(task, data)
+    for provider in provider_status()["order"]:
+        if provider == "groq" and settings.groq_api_key:
+            try:
+                response = httpx.post(
+                    GROQ_URL,
+                    headers={"Authorization": f"Bearer {settings.groq_api_key}", "Content-Type": "application/json"},
+                    json={"model": settings.groq_model, "temperature": 0.2, "max_tokens": 180,
+                          "messages": [{"role": "system", "content": "You are a cautious cyber-safety explainer."},
+                                       {"role": "user", "content": prompt}]},
+                    timeout=18,
+                )
+                response.raise_for_status()
+                answer = response.json()["choices"][0]["message"]["content"].strip()
+                if answer:
+                    return answer, "Groq"
+            except Exception as exc:
+                log.warning("Groq explanation unavailable (%s)", type(exc).__name__)
+        elif provider == "gemini" and settings.gemini_api_key:
+            try:
+                from google import genai
+                client = genai.Client(api_key=settings.gemini_api_key)
+                response = client.models.generate_content(model=settings.gemini_model, contents=prompt)
+                answer = (response.text or "").strip()
+                if answer:
+                    return answer, "Gemini"
+            except Exception as exc:
+                log.warning("Gemini explanation unavailable (%s)", type(exc).__name__)
+    return None, None
 
 
 def review_image_visual_clues(data: bytes, mime_type: str) -> tuple[str | None, str | None]:
