@@ -7,3 +7,6 @@ Pillow>=11.2.1
 google-genai==1.14.0
 pytest==8.3.5
 httpx==0.28.1
+
+# Signed C2PA provenance manifest reader for supported media
+c2pa-python==0.38.0
