@@ -69,3 +69,49 @@ def test_code_audit_redacts_secret_evidence():
     result=analyze_code(f'API_KEY = "{secret}"')
     assert secret not in str(result)
     assert "redacted" in result["findings"][0]["evidence"]
+
+def test_contextual_text_rules_do_not_flag_generic_claim_or_org_words():
+    result = analyze_text("Your bank transfer is complete. Claim your parcel at the post office.")
+    assert result["findings"] == []
+    assert result["risk_level"] == "low"
+
+
+def test_contextual_text_rules_still_detect_credential_pressure():
+    result = analyze_text("Your SBI account is blocked today. Send OTP now to restore access.")
+    assert result["risk_level"] == "high"
+    assert {item["rule_id"] for item in result["findings"]} >= {"TEXT-CREDENTIAL", "TEXT-URGENCY"}
+
+
+def test_url_format_and_dns_status_are_distinct(monkeypatch):
+    import socket
+    from app.analyzers.url import check_domain_status
+
+    monkeypatch.setattr(
+        socket, "getaddrinfo",
+        lambda *args, **kwargs: [(None, None, None, None, ("93.184.216.34", 443))],
+    )
+    result = check_domain_status("https://example.org/login")
+    assert result["format_valid"] is True
+    assert result["domain_status"] == "resolves"
+    assert "does not indicate safety" in result["domain_note"]
+
+
+def test_invalid_url_has_explicit_invalid_status():
+    from app.analyzers.url import check_domain_status
+
+    result = check_domain_status("http://[broken")
+    assert result["format_valid"] is False
+    assert result["domain_status"] == "invalid"
+
+
+def test_common_low_signal_url_stays_low_risk():
+    result = analyze_url("https://example.com/login")
+    assert result["risk_level"] == "low"
+
+
+def test_triage_detects_bare_domain_without_scheme():
+    from app.analyzers.triage import analyze_triage
+
+    result = analyze_triage("Please check example.com/account")
+    assert len(result["url_analyses"]) == 1
+    assert result["url_analyses"][0]["host"] == "example.com"

@@ -2,7 +2,7 @@ import re
 from app.analyzers.text import analyze_text
 from app.analyzers.url import analyze_url
 
-URL_PATTERN = re.compile(r"https?://[^\s<>\"']+|www\.[^\s<>\"']+", re.I)
+URL_PATTERN = re.compile(r"""https?://[^\s<>"']+|www\.[^\s<>"']+|(?<![\w@])(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?:com|org|net|co|in|io|ai|app|dev|xyz|info|biz|me|uk|us|ca|site|online|store|tech|edu|gov|link|live|shop)(?::\d+)?(?:/[^\s<>"']*)?""", re.I)
 
 def analyze_triage(content: str) -> dict:
     """Correlate message cues with any embedded URL indicators without opening links."""

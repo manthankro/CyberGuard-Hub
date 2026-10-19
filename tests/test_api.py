@@ -89,3 +89,37 @@ def test_valid_image_returns_metadata_and_fingerprint():
     assert result["format"] == "PNG"
     assert result["dimensions"] == {"width": 1, "height": 1}
     assert len(result["sha256"]) == 64
+
+
+def test_url_endpoint_returns_independent_format_and_dns_status(monkeypatch):
+    from app import main
+
+    monkeypatch.setattr(
+        main, "check_domain_status",
+        lambda value: {"format_valid": True, "domain_status": "resolves", "domain_note": "test DNS response"},
+    )
+    response = client.post("/api/analyze/url", json={"url": "https://example.org/login"})
+    assert response.status_code == 200
+    result = response.json()
+    assert result["url_validity"]["format_valid"] is True
+    assert result["url_validity"]["domain_status"] == "resolves"
+    assert result["risk_level"] == "low"
+
+
+def test_video_review_requires_consent_and_uses_gemini_observations(monkeypatch):
+    from app import main
+
+    monkeypatch.setattr(main.settings, "gemini_api_key", "test-key")
+    monkeypatch.setattr(
+        main, "review_media_observations",
+        lambda data, mime: ("A person walks through a room.", "Gemini"),
+    )
+    response = client.post(
+        "/api/analyze/media",
+        data={"ai_visual_review": "true"},
+        files={"file": ("clip.mp4", b"test video bytes", "video/mp4")},
+    )
+    assert response.status_code == 200
+    result = response.json()
+    assert result["visual_review"]["provider"] == "Gemini"
+    assert "not a deepfake/authenticity verdict" in result["visual_review"]["label"]
