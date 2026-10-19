@@ -37,7 +37,7 @@ Set `GROQ_API_KEY` and/or `GEMINI_API_KEY` as environment secrets. When both are
 
 ## Deploy on Render
 
-The private GitHub repository is [manthankro/CyberGuard-Hub](https://github.com/manthankro/CyberGuard-Hub).
+The GitHub repository is [manthankro/CyberGuard-Hub](https://github.com/manthankro/CyberGuard-Hub).
 
 1. In Render, select **New + → Blueprint** and connect the repository.
 2. Render reads `render.yaml` and builds the included Dockerfile.
