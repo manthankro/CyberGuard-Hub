@@ -143,3 +143,57 @@ def test_email_exposure_returns_scoped_provider_result(monkeypatch):
     assert response.status_code == 200
     assert response.json()["found"] is False
     assert "email" not in response.json()
+
+
+
+def test_media_report_has_consistent_explicit_unscored_fields():
+    response = client.post(
+        "/api/analyze/media",
+        files={"file": ("clip.mp4", b"video bytes", "video/mp4")},
+    )
+    assert response.status_code == 200
+    result = response.json()
+    assert result["risk_score"] is None
+    assert result["risk_level"] == "inconclusive"
+    assert result["score_kind"] == "not_scored"
+    assert "cannot establish" in result["score_explanation"]
+
+
+def test_video_model_scan_requires_both_server_credentials(monkeypatch):
+    from app import main
+
+    monkeypatch.setattr(main.settings, "sightengine_api_user", "")
+    monkeypatch.setattr(main.settings, "sightengine_api_secret", "")
+    response = client.post(
+        "/api/analyze/media",
+        data={"ai_authenticity_scan": "true"},
+        files={"file": ("clip.mp4", b"video bytes", "video/mp4")},
+    )
+    assert response.status_code == 503
+    assert "SIGHTENGINE_API_USER" in response.json()["detail"]
+    assert "SIGHTENGINE_API_SECRET" in response.json()["detail"]
+
+
+def test_video_model_scan_runs_with_consent_and_credentials(monkeypatch):
+    from app import main
+
+    monkeypatch.setattr(main.settings, "sightengine_api_user", "test-user")
+    monkeypatch.setattr(main.settings, "sightengine_api_secret", "test-secret")
+    monkeypatch.setattr(
+        main, "scan_video_authenticity",
+        lambda data, filename, mime, user, secret: {
+            "provider": "Sightengine",
+            "status": "analyzed",
+            "frames_analyzed": 1,
+            "frames": [{"time": 0, "deepfake_probability": 0.12, "ai_generated_probability": 0.08}],
+            "note": "Model signals only.",
+        },
+    )
+    response = client.post(
+        "/api/analyze/media",
+        data={"ai_authenticity_scan": "true"},
+        files={"file": ("clip.mp4", b"video bytes", "video/mp4")},
+    )
+    assert response.status_code == 200
+    assert response.json()["authenticity_scan"]["provider"] == "Sightengine"
+    assert response.json()["authenticity_scan"]["frames_analyzed"] == 1
