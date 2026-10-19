@@ -586,7 +586,25 @@ async function runAnalysis() {
       });
     }
 
-    const data = await response.json();
+    const contentType = response.headers.get('content-type') || '';
+    let data = null;
+    if (contentType.includes('application/json')) {
+      try {
+        data = await response.json();
+      } catch (_) {
+        data = null;
+      }
+    } else {
+      // Consume non-JSON error bodies without surfacing a JSON parser exception.
+      await response.text();
+    }
+    if (!data) {
+      if (currentTool === 'media') {
+        const limit = $('#upload-limit')?.textContent || '4';
+        throw new Error(`Media check could not finish (HTTP ${response.status}). Use a supported image, audio, or video file under ${limit} MB and try again.`);
+      }
+      throw new Error(`The server returned an unreadable response (HTTP ${response.status}). Please try again.`);
+    }
     if (!response.ok) {
       throw new Error(data.detail || 'The security evaluation could not be completed.');
     }
