@@ -13,5 +13,11 @@ services:
         value: openai/gpt-oss-120b
       - key: GEMINI_MODEL
         value: gemini-3.8-flash
+      - key: SIGHTENGINE_API_USER
+        sync: false
+      - key: SIGHTENGINE_API_SECRET
+        sync: false
+      - key: HIBP_API_KEY
+        sync: false
       - key: MAX_UPLOAD_MB
         value: "10"
