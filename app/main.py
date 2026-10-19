@@ -1,4 +1,5 @@
 import os
+import asyncio
 from pathlib import Path
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
@@ -7,7 +8,7 @@ from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 from app.config import settings
 from app.analyzers.text import analyze_text
-from app.analyzers.url import analyze_url
+from app.analyzers.url import analyze_url, check_domain_status
 from app.analyzers.code import analyze_code
 from app.analyzers.media import inspect_media
 from app.analyzers.triage import analyze_triage
@@ -40,7 +41,7 @@ def upload_limit_mb() -> int:
 
 @app.get("/health")
 def health():
-    return {"status":"ok","providers":provider_status(),"version":app.version,"max_upload_mb":upload_limit_mb(),"groq_model":settings.groq_model}
+    return {"status":"ok","providers":provider_status(),"version":app.version,"max_upload_mb":upload_limit_mb(),"groq_model":settings.groq_model,"gemini_model":settings.gemini_model,"ai_provider_order":provider_status()["order"]}
 from app.analyzers.text import PATTERNS as TEXT_PATTERNS
 from app.analyzers.code import RULES as CODE_RULES
 
@@ -79,9 +80,18 @@ def modules():
         {"id":"media","name":"Media verification","description":"Inspect image file signatures and metadata; optional Gemini visual observations are not a deepfake verdict."},
         {"id":"code","name":"Code audit","description":"Find selected vulnerability patterns with line references and fixes."},
     ]}
+async def with_domain_status(url: str) -> dict:
+    try:
+        return await asyncio.wait_for(asyncio.to_thread(check_domain_status, url), timeout=1.5)
+    except asyncio.TimeoutError:
+        return {"format_valid": True, "domain_status": "unknown", "domain_note": "DNS check timed out; URL pattern analysis is still available."}
+
 @app.post("/api/analyze/triage")
-def triage_scan(request:TriageRequest):
+async def triage_scan(request:TriageRequest):
     result=analyze_triage(request.content)
+    statuses = await asyncio.gather(*(with_domain_status(item["url"]) for item in result["url_analyses"]))
+    for item, status in zip(result["url_analyses"], statuses):
+        item["url_validity"] = status
     result["ai_explanation"],result["ai_provider"]=explain_findings("message and embedded link triage",result)
     if result["ai_provider"]: result["analysis_mode"]=f"correlated local rules + {result['ai_provider']} explanation"
     return result
@@ -92,8 +102,9 @@ def text_scan(request:TextRequest):
     result["analysis_mode"]=f"local rules + {result['ai_provider']} explanation" if result["ai_provider"] else "local rules"
     return result
 @app.post("/api/analyze/url")
-def url_scan(request:URLRequest):
+async def url_scan(request:URLRequest):
     result=analyze_url(request.url)
+    result["url_validity"] = await with_domain_status(request.url)
     result["ai_explanation"],result["ai_provider"]=explain_findings("URL indicators",result)
     result["analysis_mode"]=f"URL heuristics + {result['ai_provider']} explanation" if result["ai_provider"] else "local URL heuristics"
     return result
