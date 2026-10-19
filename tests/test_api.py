@@ -13,7 +13,7 @@ def test_text_endpoint():
     assert response.json()["risk_score"] > 0
 
 def test_code_endpoint():
-    response=client.post("/api/analyze/code",json={"code":"query = \"SELECT * FROM x WHERE id=\" + user_id"})
+    response=client.post("/api/analyze/code",json={"code":"cursor.execute(\"SELECT * FROM x WHERE id=\" + user_id)"})
     assert response.status_code == 200
     assert response.json()["findings"]
 
