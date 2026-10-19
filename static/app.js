@@ -65,11 +65,48 @@ const TOOL_META = {
     input: 'Upload Media File',
     button: 'Verify File',
     endpoint: '/api/analyze/media'
-  }
+  },
+
+  upi: {
+    id: 'upi',
+    name: 'UPI & Payment Checker',
+    kicker: 'PAYMENT REQUEST AUDIT',
+    title: 'Check the Payee,<br><em>Before You Send Money.</em>',
+    description: 'Inspect UPI IDs, payment requests, and decoded QR payloads for suspicious handles — offline heuristics only.',
+    input: 'UPI ID or Payment Message',
+    button: 'Check Payment Safely',
+    endpoint: '/api/analyze/upi',
+    field: 'text',
+    placeholder: 'Paste UPI ID (name@ybl) or the full payment / refund message...'
+  },
+  phone: {
+    id: 'phone',
+    name: 'Phone Number Check',
+    kicker: 'MOBILE HEURISTIC SCAN',
+    title: 'Pause Before You Call Back,<br><em>Check the Number Pattern.</em>',
+    description: 'Offline pattern and context checks for Indian mobile numbers in SMS or WhatsApp text. Not a live spam registry.',
+    input: 'Phone Number or Message',
+    button: 'Check Number',
+    endpoint: '/api/analyze/phone',
+    field: 'text',
+    placeholder: 'Paste a 10-digit mobile number or the full SMS / WhatsApp text...'
+  },
+
 };
+
+
 
 // Attack Vector Presets for realistic testing
 const PRESETS = {
+  upi: [
+    { label: 'Fake KYC refund UPI', detail: 'Suspicious refund handle', value: 'URGENT: Your account will be blocked. Send KYC fee to sbi.kyc.refund@ybl to continue.' },
+    { label: 'Normal merchant-looking VPA', detail: 'Low signal control', value: 'Pay coffee shop order to cafe.mumbai.shop@okaxis' }
+  ],
+  phone: [
+    { label: 'KYC callback SMS', detail: 'High context risk', value: 'Your KYC is pending. Call +91 9876543210 immediately and share OTP to avoid account freeze.' },
+    { label: 'Plain number', detail: 'Low signal', value: 'Call me at 9812345678 when free.' }
+  ],
+
   triage: [
     {
       title: 'Bank KYC Freeze & Phishing Link',
@@ -351,6 +388,7 @@ function setupEvents() {
     const action = event.target.closest('[data-safety-card-action]')?.dataset.safetyCardAction;
     if (action === 'copy') copyFamilySafetyCard();
     if (action === 'download') downloadFamilySafetyCard();
+    if (action === 'whatsapp') shareFamilySafetyCardWhatsApp();
   });
 
   // History Actions
@@ -580,7 +618,7 @@ async function runAnalysis() {
       form.append('ai_authenticity_scan', $('#media-authenticity-consent').checked ? 'true' : 'false');
       response = await fetch(meta.endpoint, { method: 'POST', body: form });
     } else {
-      const inputMap = { triage: 'triage-input', text: 'text-input', url: 'url-input', code: 'code-input' };
+      const inputMap = { triage: 'triage-input', text: 'text-input', url: 'url-input', code: 'code-input', upi: 'upi-input', phone: 'phone-input' };
       const rawInput = $('#' + inputMap[currentTool]).value.trim();
 
       if (rawInput.length < 3) {
@@ -667,9 +705,9 @@ function renderEvidenceReport(data, rawInput) {
       <div class="gauge-circular">
         <svg class="gauge-svg" viewBox="0 0 72 72">
           <circle class="gauge-track" cx="36" cy="36" r="${radius}"></circle>
-          <circle class="gauge-fill" cx="36" cy="36" r="${radius}" 
-                  stroke="${strokeColor}" 
-                  stroke-dasharray="${circumference}" 
+          <circle class="gauge-fill" cx="36" cy="36" r="${radius}"
+                  stroke="${strokeColor}"
+                  stroke-dasharray="${circumference}"
                   stroke-dashoffset="${strokeOffset}"></circle>
         </svg>
         <div class="gauge-score-value">
@@ -777,7 +815,7 @@ function renderEvidenceReport(data, rawInput) {
               <div class="evidence-snippet-box">${escapeHtml(link.url || link.host)}</div>
               ${link.url_validity ? '<div class="text-sub">' + escapeHtml(link.url_validity.domain_status + ': ' + link.url_validity.domain_note) + '</div>' : ''}
               <div class="evidence-why">
-                ${link.findings?.length 
+                ${link.findings?.length
                   ? link.findings.map(f => typeof f === 'string' ? escapeHtml(f) : escapeHtml(f.category)).join(' · ')
                   : 'No high-risk URL patterns matched.'}
               </div>
@@ -1045,7 +1083,7 @@ function renderFamilySafetyCard(report, sourceText) {
       </div>
       <div class="family-safety-block"><strong>${escapeHtml(copy.steps)}</strong><ol>${model.actions.map(action => `<li>${escapeHtml(action)}</li>`).join('')}</ol></div>
       <p class="family-safety-privacy">${escapeHtml(copy.footer)}</p>
-      <div class="family-safety-actions"><button type="button" class="btn btn-secondary btn-sm" data-safety-card-action="copy">Copy help card</button><button type="button" class="btn btn-secondary btn-sm" data-safety-card-action="download">Download help card</button></div>
+      <div class="family-safety-actions"><button type="button" class="btn btn-secondary btn-sm" data-safety-card-action="copy">Copy help card</button><button type="button" class="btn btn-secondary btn-sm" data-safety-card-action="download">Download help card</button><button type="button" class="btn btn-secondary btn-sm" data-safety-card-action="whatsapp">Share on WhatsApp</button></div>
     </section>`;
 }
 
@@ -1065,6 +1103,15 @@ async function copyFamilySafetyCard() {
   } catch {
     showToast('Clipboard unavailable. Use Download help card instead.', true);
   }
+}
+
+
+function shareFamilySafetyCardWhatsApp() {
+  const text = getFamilySafetyCardText();
+  if (!text) return;
+  const url = 'https://wa.me/?text=' + encodeURIComponent(text);
+  window.open(url, '_blank', 'noopener,noreferrer');
+  showToast('Opening WhatsApp with privacy-safe help card (original message not included).');
 }
 
 function downloadFamilySafetyCard() {
@@ -1483,10 +1530,91 @@ window.CyberGuard = {
   deleteRecord: deleteHistoryEntry
 };
 
+
+// --------------------------------------------------------------------------
+// Elder Mode + QR client decode
+// --------------------------------------------------------------------------
+function toggleElderMode(on) {
+  document.body.classList.toggle('elder-mode', !!on);
+  try { localStorage.setItem('cyberguard.elderMode', on ? '1' : '0'); } catch (e) {}
+  showToast(on ? 'Elder Mode on — larger text and simpler labels.' : 'Elder Mode off.');
+}
+
+function initElderMode() {
+  let on = false;
+  try { on = localStorage.getItem('cyberguard.elderMode') === '1'; } catch (e) {}
+  document.body.classList.toggle('elder-mode', on);
+  const btn = document.getElementById('elder-mode-toggle');
+  if (btn) {
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    btn.addEventListener('click', () => {
+      const next = !document.body.classList.contains('elder-mode');
+      toggleElderMode(next);
+      btn.setAttribute('aria-pressed', next ? 'true' : 'false');
+    });
+  }
+}
+
+async function decodeQrFromFile(file) {
+  if (!file || !window.jsQR) {
+    showToast('QR library not loaded. Refresh the page.', true);
+    return null;
+  }
+  const bitmap = await createImageBitmap(file);
+  const canvas = document.createElement('canvas');
+  canvas.width = bitmap.width;
+  canvas.height = bitmap.height;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(bitmap, 0, 0);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const code = window.jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' });
+  return code && code.data ? code.data : null;
+}
+
+function setupQrUpload() {
+  const input = document.getElementById('qr-file-input');
+  const target = document.getElementById('upi-input') || document.getElementById('url-input');
+  if (!input) return;
+  input.addEventListener('change', async () => {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    try {
+      const data = await decodeQrFromFile(file);
+      if (!data) {
+        showToast('No QR code detected in this image.', true);
+        return;
+      }
+      const upiBox = document.getElementById('upi-input');
+      const urlBox = document.getElementById('url-input');
+      if (data.startsWith('upi://') || data.includes('@')) {
+        if (upiBox) {
+          upiBox.value = data;
+          upiBox.dispatchEvent(new Event('input', { bubbles: true }));
+          showPage('upi');
+          currentTool = 'upi';
+        }
+      } else if (urlBox) {
+        let cleaned = data.replace(/^https?:\/\//i, '');
+        urlBox.value = cleaned;
+        urlBox.dispatchEvent(new Event('input', { bubbles: true }));
+        showPage('url');
+        currentTool = 'url';
+      }
+      showToast('QR decoded into the input panel. Review before analyzing.');
+    } catch (err) {
+      showToast('Could not read QR image.', true);
+    } finally {
+      input.value = '';
+    }
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   setupEvents();
   renderDashboardRecent();
   updateStatsAndCounts();
   checkHealth();
   loadRulesCatalog();
+  initElderMode();
+  setupQrUpload();
 });
