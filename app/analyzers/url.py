@@ -1,5 +1,6 @@
 import ipaddress
 import re
+import socket
 from urllib.parse import urlsplit
 
 BRANDS = (
@@ -108,12 +109,19 @@ def analyze_url(value: str) -> dict:
             add("URL-TYPOLOOKALIKE", "Brand-like or typo-lookalike registered domain", root_label, f"The registered domain resembles the name {brand}; this heuristic may also match unrelated domains.", "Open the organisation's official domain from a bookmark or other trusted source.", "high")
             break
 
-    score = min(95, sum(30 if item["severity"] == "high" else 18 for item in findings))
+    # Repeated or overlapping indicators should not inflate risk. A URL pattern
+    # is a clue, never a verdict; low-impact clues contribute less.
+    weights = {"URL-IP": 24, "URL-USERINFO": 30, "URL-PUNYCODE": 18,
+               "URL-SHORTENER": 10, "URL-SUBDOMAIN": 7, "URL-LONG-HOST": 5,
+               "URL-NO-HTTPS": 8, "URL-ODD-HOST": 7, "URL-SUSPICIOUS-TLD": 8,
+               "URL-DECEPTIVE-PATH": 10, "URL-BRAND-SUBDOMAIN": 28,
+               "URL-TYPOLOOKALIKE": 26}
+    score = min(95, sum(weights.get(item["rule_id"], 0) for item in findings))
     return {
         "host": host,
         "scheme": parsed.scheme,
         "risk_score": score,
-        "risk_level": "high" if score >= 55 else "medium" if score >= 20 else "low",
+        "risk_level": "high" if score >= 50 else "medium" if score >= 20 else "low",
         "findings": findings,
         "components": {
             "scheme": parsed.scheme,
@@ -136,3 +144,42 @@ def analyze_url(value: str) -> dict:
         ],
         "disclaimer": "Heuristic URL inspection only. CyberGuard does not visit the URL, check live reputation, certificate validity, domain age, or prove that a site is safe.",
     }
+
+
+
+def check_domain_status(value: str) -> dict:
+    """Check URL syntax and public DNS only; never makes an HTTP request."""
+    raw = value.strip()
+    candidate = raw if "://" in raw else "https://" + raw
+    try:
+        parsed = urlsplit(candidate)
+        host = (parsed.hostname or "").rstrip(".").lower()
+        _ = parsed.port
+        syntactically_valid = bool(host and parsed.scheme in {"http", "https"} and not any(ch.isspace() for ch in raw))
+    except ValueError:
+        host = ""
+        syntactically_valid = False
+    if not syntactically_valid:
+        return {"format_valid": False, "domain_status": "invalid", "domain_note": "The URL format is incomplete or malformed."}
+    if not host or host == "localhost" or "." not in host or host.endswith((".local", ".internal", ".test", ".invalid", ".example")):
+        return {"format_valid": True, "domain_status": "not_public", "domain_note": "Well-formed URL, but this is not a public internet hostname."}
+    try:
+        ip = ipaddress.ip_address(host)
+        if not ip.is_global:
+            return {"format_valid": True, "domain_status": "not_public", "domain_note": "Well-formed URL, but the address is not globally routable."}
+        return {"format_valid": True, "domain_status": "resolves", "domain_note": "The public IP address is globally routable; this does not indicate safety."}
+    except ValueError:
+        pass
+    try:
+        results = socket.getaddrinfo(host, None, type=socket.SOCK_STREAM)
+        addresses = {item[4][0] for item in results}
+        if not addresses:
+            raise socket.gaierror()
+        parsed_ips = [ipaddress.ip_address(address) for address in addresses]
+        if not all(ip.is_global for ip in parsed_ips):
+            return {"format_valid": True, "domain_status": "not_public", "domain_note": "The hostname resolves to a non-public address; the site was not contacted."}
+        return {"format_valid": True, "domain_status": "resolves", "domain_note": "The hostname currently resolves in public DNS; this does not indicate safety."}
+    except socket.gaierror:
+        return {"format_valid": True, "domain_status": "not_resolved", "domain_note": "The hostname did not resolve from this server. It may be misspelled, offline, new, or blocked."}
+    except OSError:
+        return {"format_valid": True, "domain_status": "unknown", "domain_note": "A DNS status could not be obtained; URL-format analysis is still available."}
