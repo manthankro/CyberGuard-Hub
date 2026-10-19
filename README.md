@@ -10,9 +10,9 @@
 
 - **Smart triage:** paste an SMS, email, or chat. The app checks its wording and every embedded link together, then explains the correlated signals in one report.
 - **Scam message analyzer (Module 2):** transparent phrase rules for urgency, credential/OTP requests, payment lures, links, and impersonation cues. Includes selected English, Hindi (Devanagari), and Gujarati patterns; it is not broad multilingual understanding.
-- **URL scanner (Module 1):** checks URL text for punycode, raw IPs, shorteners, long/deep domains, user-info syntax, brand-like subdomains, and simple one-edit/brand-like domain lookalikes. Each indicator explains why it matters and suggests a safer action. It never visits the destination, calls a reputation service, or declares a link safe.
+- **URL scanner (Module 1):** checks URL text for punycode, raw IPs, shorteners, long/deep domains, user-info syntax, brand-like subdomains, and simple one-edit/brand-like domain lookalikes. Each indicator explains why it matters and suggests a safer action. It never opens the destination or calls a reputation service. Results separately report URL format and public DNS lookup; resolution does not indicate safety.
 - **Code auditor (Module 4):** checks selected patterns for SQL/shell injection, hard-coded credentials, unsafe deserialization, dynamic code execution, XSS sinks, disabled TLS verification, and Solidity anti-patterns. Findings include rule IDs, line numbers, evidence, impact, and fixes. It is not a full parser.
-- **Media verification (Module 3):** inspects supported image signatures, MIME/extension mismatches, dimensions, metadata presence, and a SHA-256 file fingerprint. Damaged or unsupported image bytes return an explicit finding instead of a server parsing error. Audio/video uploads are hashed and sized but not parsed for authenticity. Optionally, after a separate unchecked consent box, a supported image can be sent to Gemini for visible inconsistency observations. This is not a forensic deepfake detector and never returns an authenticity verdict.
+- **Media verification (Module 3):** inspects supported image signatures, MIME/extension mismatches, dimensions, metadata presence, and a SHA-256 file fingerprint. Damaged or unsupported image bytes return an explicit finding instead of a server parsing error. Audio uploads are hashed and sized but not parsed. Video uploads are hashed and sized; with consent, supported video files can also receive a short Gemini content description, not an authenticity check. Optionally, after a separate unchecked consent box, a supported image can be sent to Gemini for visible inconsistency observations. This is not a forensic deepfake detector and never returns an authenticity verdict.
 - **Explainable cybersecurity:** findings include evidence, why a signal matters, and a next step. Scores are indicator scores—not probabilities. Optional Groq-first, Gemini-fallback text explanations receive sanitized labels, not the submitted message, source code, or full URL. The optional image review is a distinct opt-in and sends that selected image to Gemini. If providers are unavailable, local analysis still works.
 - **Scam Pause family help card:** after message or smart-triage analysis, the browser creates an English, Hindi, or Gujarati action card from matched signal categories. It explains the likely request and safer next steps. Copy/download includes only broad signal labels and guidance; it excludes the original text, links, phone numbers, and account details. It is a user-controlled local export, not automatic message forwarding.
 - **On-device report workspace:** scan history stores only short summaries and finding labels in this browser's local storage. It does not save original submitted content. Reports can be copied, exported as JSON, or printed/saved as PDF.
@@ -38,7 +38,7 @@ Open <http://127.0.0.1:8000>. Interactive API documentation is at `/docs`; servi
 
 ### Optional AI setup
 
-Set `GROQ_API_KEY` and/or `GEMINI_API_KEY` as server-side environment secrets. Groq is tried first for text explanations; if it is unavailable, Gemini is tried, then local rules remain available. Do not put keys in frontend files or commit `.env`. Local analyzers work without either key. The default Groq model is `openai/gpt-oss-120b`; the previous `llama-3.3-70b-versatile` model was deprecated by Groq on August 16, 2026. If you have set `GROQ_MODEL` manually in Vercel, update it too.
+Set `GROQ_API_KEY` and/or `GEMINI_API_KEY` as server-side environment secrets. The server tries providers in `AI_PROVIDER_ORDER` (default `groq,gemini`). Set `AI_PROVIDER_ORDER=gemini,groq` to prefer Gemini. If neither provider is configured or both fail, local rules remain available. Do not put keys in frontend files or commit `.env`. Local analyzers work without either key. The default Groq model is `openai/gpt-oss-120b`; the previous `llama-3.3-70b-versatile` model was deprecated by Groq on August 16, 2026. If you have set `GROQ_MODEL` manually in Vercel, update it too.
 
 ## Deploy on Vercel
 
@@ -49,7 +49,7 @@ This repository includes the FastAPI entrypoint Vercel detects at `app/index.py`
 3. If `GROQ_MODEL` already exists in Vercel, set it to `openai/gpt-oss-120b` or remove it to use the app default. The UI shows whether a key is configured, and a report shows whether Groq actually returned an explanation.
 4. Deploy or redeploy, then open `/health`. It should return `status: ok`, `providers.groq: true`, and `max_upload_mb: 4`. If the key was added after an earlier deployment, redeploy so the new environment value is applied.
 
-Vercel Functions limit request bodies to 4.5 MB, so media uploads are capped at 4 MB on Vercel (including multipart overhead). Other hosts use `MAX_UPLOAD_MB`. The optional Gemini image review requires a separate `GEMINI_API_KEY` and user opt-in.
+Vercel Functions limit request bodies to 4.5 MB, so media uploads are capped at 4 MB on Vercel (including multipart overhead). Other hosts use `MAX_UPLOAD_MB`. Optional Gemini media observations support common images and MP4/WebM/QuickTime videos under the upload limit, require `GEMINI_API_KEY`, and require explicit user opt-in. They describe media; they are not deepfake or authenticity detection.
 
 ## Deploy on Render
 
@@ -68,7 +68,7 @@ The container binds to Render's `PORT`; `/health` is configured as the service h
 - `POST /api/analyze/text` — `{"text":"..."}`
 - `POST /api/analyze/url` — `{"url":"https://..."}`
 - `POST /api/analyze/code` — `{"code":"..."}`
-- `POST /api/analyze/media` — multipart fields `file` and optional `ai_visual_review=false`; set the latter to `true` only when you consent to send a supported image to Gemini. The optional review is image-only and not a deepfake verdict.
+- `POST /api/analyze/media` — multipart fields `file` and optional `ai_visual_review=false`; set the latter to `true` only when you consent to send a supported image to Gemini. The optional review supports images and MP4/WebM/QuickTime video and is not a deepfake verdict.
 - `GET /api/modules`
 - `GET /api/rules` — transparent heuristic catalog with rule IDs, descriptions, and mitigations
 - `GET /health`
