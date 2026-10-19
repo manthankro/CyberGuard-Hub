@@ -769,6 +769,7 @@ function renderEvidenceReport(data, rawInput) {
                 <span class="history-risk-pill risk-${escapeHtml(link.risk_level)}">${escapeHtml(link.risk_level)}</span>
               </div>
               <div class="evidence-snippet-box">${escapeHtml(link.url || link.host)}</div>
+              ${link.url_validity ? '<div class="text-sub">' + escapeHtml(link.url_validity.domain_status + ': ' + link.url_validity.domain_note) + '</div>' : ''}
               <div class="evidence-why">
                 ${link.findings?.length 
                   ? link.findings.map(f => typeof f === 'string' ? escapeHtml(f) : escapeHtml(f.category)).join(' · ')
