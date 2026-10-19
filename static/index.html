@@ -443,7 +443,7 @@
                   <input id="url-input" class="text-input" placeholder="example-verify-login.account-check.xyz/auth">
                 </div>
                 <div class="input-meta-bar">
-                  <span class="input-note">Inspects domain structure, punycode, lookalikes, and query syntax offline.</span>
+                  <span class="input-note">Checks URL format and public DNS reachability, then inspects structure. It never opens the site; a resolving domain is not proof of safety.</span>
                 </div>
               </div>
 
@@ -485,8 +485,8 @@
                 <label class="consent-checkbox-card" for="media-ai-consent">
                   <input id="media-ai-consent" type="checkbox">
                   <div class="consent-copy">
-                    <b>Optional Gemini Visual Analysis</b>
-                    <small>Sends the selected image to Google Gemini to describe visible artifacts. Off by default. Not a deepfake verification.</small>
+                    <b>Optional Gemini Media Observations</b>
+                    <small>With your consent, sends the selected image or video to Gemini for a short description. Off by default. Not a deepfake detector or authenticity verdict.</small>
                   </div>
                 </label>
 
