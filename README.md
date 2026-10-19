@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="static/logo.jpg" alt="CyberGuard Hub - Check before you click" width="650"/>
+</p>
+
 # CyberGuard Hub
 
 **A unified digital-safety workspace for the Navratri Codeathon cybersecurity track.** CyberGuard brings scam-message analysis, phishing URL indicators, media inspection, code auditing, and correlated message triage into one dashboard. Every module returns observable signals, plain-language guidance, and clear limitations.
@@ -70,3 +74,9 @@ node --check static/app.js
 CyberGuard does not persist submitted content on the server. Browser history stores short report summaries and finding labels locally and can be cleared in the History view. For optional text explanations, the server sends sanitized finding labels to the configured provider. The image review has a separate opt-in because it sends the selected image to Gemini. Do not submit secrets or sensitive personal information. Uploads are limited by `MAX_UPLOAD_MB`.
 
 This is a new standalone implementation. Pramanix AI was used only as a product-structure reference; this repository does not copy from or modify it. Before presenting, check the organizers' rules on AI-assisted code, pre-existing work, and outside libraries, and accurately describe your team's contributions.
+
+## License
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.  
+Copyright (c) 2026 **Manthan Lonkar**.
+
