@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#070b12">
-  <meta name="description" content="CyberGuard Hub — Enterprise-grade digital safety workspace. Deep inspection for suspicious messages, links, media, and code with transparent evidence and mitigation guidance.">
-  <title>CyberGuard Hub — Advanced Digital Safety Workspace</title>
+  <meta name="description" content="Check suspicious messages, links, images, and code. See the warning signs and safer next steps in plain language.">
+  <title>CyberGuard Hub — Check before you click</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -151,7 +151,7 @@
               <span class="hero-live-dot"></span>
               <span>UNIFIED CYBER THREAT TRIAGE & ANALYSIS PLATFORM</span>
             </div>
-            <h1 class="hero-headline">Pause. Inspect.<br><span class="hero-gradient">Neutralize Digital Threats.</span></h1>
+            <h1 class="hero-headline">Pause. Check.<br><span class="hero-gradient">Stay safer online.</span></h1>
             <p class="hero-description">
               Verify suspicious emails, texts, URLs, binary media, and source code in a private, client-first workspace. Get transparent signal scores, observable evidence, and instant defensive steps.
             </p>
@@ -211,11 +211,11 @@
 
           <div class="stat-card">
             <div class="stat-top">
-              <span class="stat-title">DATA PRIVACY STATUS</span>
+              <span class="stat-title">YOUR DATA</span>
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
             </div>
-            <div class="stat-number text-mint">100%</div>
-            <div class="stat-footer">Zero server persistence</div>
+            <div class="stat-number text-mint">Private</div>
+            <div class="stat-footer">Inputs are not saved by this app</div>
           </div>
         </div>
 
@@ -223,9 +223,9 @@
         <div class="section-header">
           <div>
             <div class="section-tag">INVESTIGATION MODULES</div>
-            <h2 class="section-title">Specialized Defense Analyzers</h2>
+            <h2 class="section-title">What would you like to check?</h2>
           </div>
-          <span class="section-hint">Choose a module to analyze suspicious artifacts with explainable heuristics</span>
+          <span class="section-hint">Choose a message, link, code snippet, or media file. Each result shows its signals and next steps.</span>
         </div>
 
         <div class="tools-grid">
@@ -309,7 +309,7 @@
             <div class="tool-card-body">
               <div class="tool-header-row">
                 <h3 class="tool-name">Media & EXIF Verification</h3>
-                <span class="tag-pill">FORENSIC</span>
+                <span class="tag-pill">FILE SIGNALS</span>
               </div>
               <p class="tool-desc">Inspect magic-byte MIME mismatches, metadata tampering, EXIF properties, and SHA-256 signatures.</p>
               <div class="tool-tags">
@@ -358,8 +358,8 @@
             <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           </div>
           <div class="guarantee-body">
-            <h4>Private by Architecture · Client-Bound Analysis</h4>
-            <p>Your inputs, messages, and uploaded files are analyzed in-flight and are never written to disk or stored on external servers. Scan history is retained strictly within this browser's local sandbox.</p>
+            <h4>Your checks stay yours</h4>
+            <p>CyberGuard does not save submitted content. If Groq explanations are enabled, the app sends finding labels for an explanation. Optional image observations send the selected image to Gemini only after you opt in. Scan summaries stay in this browser.</p>
           </div>
           <button class="btn btn-secondary btn-sm" id="dashboard-privacy-learn">How It Works</button>
         </div>
@@ -369,9 +369,9 @@
       <section id="page-investigate" class="page-view">
         <!-- Module Header -->
         <div class="investigation-intro">
-          <div class="intro-badge" id="tool-overline">MESSAGE TRIAGE</div>
-          <h1 class="intro-title" id="tool-title">Correlate Signals,<br><em>Understand the Full Picture.</em></h1>
-          <p class="intro-desc" id="tool-description">Inspect messages and embedded hyperlinks in tandem to detect synchronized social-engineering hooks.</p>
+          <div class="intro-badge" id="tool-overline">MESSAGE CHECK</div>
+          <h1 class="intro-title" id="tool-title">Check it before<br><em>you click or reply.</em></h1>
+          <p class="intro-desc" id="tool-description">Paste a message, link, code snippet, or upload media. See what stood out, why it matters, and what to do next.</p>
         </div>
 
         <!-- Module Selector Tabs -->
@@ -466,7 +466,7 @@
                   </div>
                   <div class="drop-zone-text">
                     <b id="file-label">Click or Drag & Drop File</b>
-                    <small>Supports PNG, JPEG, WEBP, GIF, MP4, WAV, MP3 · Max 10 MB</small>
+                    <small>Images, audio, and video · Max <span id="upload-limit">4</span> MB on this host</small>
                   </div>
                   <input id="media-input" type="file" accept="image/*,audio/*,video/*" class="file-input-hidden">
                 </div>

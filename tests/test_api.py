@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 from app.main import app
+import os
 
 client=TestClient(app)
 def test_health_and_home():
@@ -36,3 +37,15 @@ def test_rules_catalog():
     assert any(r["module"] == "code" for r in rules)
     assert any(r["module"] == "url" for r in rules)
 
+
+
+def test_vercel_upload_limit_is_safe(monkeypatch):
+    monkeypatch.setenv("VERCEL", "1")
+    health = client.get("/health").json()
+    assert health["max_upload_mb"] == 4
+    assert health["groq_model"]
+
+
+def test_local_upload_limit_uses_configuration(monkeypatch):
+    monkeypatch.delenv("VERCEL", raising=False)
+    assert client.get("/health").json()["max_upload_mb"] >= 1

@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
@@ -32,8 +33,14 @@ async def security_headers(request, call_next):
 
 @app.get("/",include_in_schema=False)
 def home(): return FileResponse(STATIC/"index.html")
+def upload_limit_mb() -> int:
+    configured = max(1, settings.max_upload_mb)
+    # Vercel functions cap the full request body at 4.5 MB, including multipart overhead.
+    return min(configured, 4) if os.getenv("VERCEL") else configured
+
 @app.get("/health")
-def health(): return {"status":"ok","providers":provider_status(),"version":app.version}
+def health():
+    return {"status":"ok","providers":provider_status(),"version":app.version,"max_upload_mb":upload_limit_mb(),"groq_model":settings.groq_model}
 from app.analyzers.text import PATTERNS as TEXT_PATTERNS
 from app.analyzers.code import RULES as CODE_RULES
 
@@ -98,9 +105,9 @@ def code_scan(request:CodeRequest):
     return result
 @app.post("/api/analyze/media")
 async def media_scan(file:UploadFile=File(...), ai_visual_review:bool=Form(False)):
-    limit=settings.max_upload_mb*1024*1024
+    limit=upload_limit_mb()*1024*1024
     data=await file.read(limit+1)
-    if len(data)>limit: raise HTTPException(status_code=413,detail=f"File exceeds {settings.max_upload_mb} MB limit")
+    if len(data)>limit: raise HTTPException(status_code=413,detail=f"File exceeds {upload_limit_mb()} MB limit")
     if not data: raise HTTPException(status_code=400,detail="Uploaded file is empty")
     mime=file.content_type or "application/octet-stream"
     if not (mime.startswith("image/") or mime.startswith("video/") or mime.startswith("audio/")):

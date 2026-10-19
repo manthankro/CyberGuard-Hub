@@ -37,7 +37,18 @@ Open <http://127.0.0.1:8000>. Interactive API documentation is at `/docs`; servi
 
 ### Optional AI setup
 
-Set `GROQ_API_KEY` and/or `GEMINI_API_KEY` as environment secrets. When both are present, Groq is tried first and Gemini is used if Groq is unavailable. Do not put keys in frontend files or commit `.env`. Local analyzers work without either key. Provider models can be changed through `GROQ_MODEL` and `GEMINI_MODEL`.
+Set `GROQ_API_KEY` and/or `GEMINI_API_KEY` as server-side environment secrets. Groq is tried first for text explanations; if it is unavailable, Gemini is tried, then local rules remain available. Do not put keys in frontend files or commit `.env`. Local analyzers work without either key. The default Groq model is `openai/gpt-oss-120b`; the previous `llama-3.3-70b-versatile` model was deprecated by Groq on August 16, 2026. If you have set `GROQ_MODEL` manually in Vercel, update it too.
+
+## Deploy on Vercel
+
+This repository includes the FastAPI entrypoint Vercel detects at `app/index.py`; the dashboard and API are served from the same app and origin.
+
+1. Import `manthankro/CyberGuard-Hub` into Vercel and keep the project root at the repository root.
+2. In **Project Settings → Environment Variables**, add `GROQ_API_KEY` with your Groq key. Add it to Production and Preview if both should use AI explanations. Keep the key out of GitHub and browser code.
+3. If `GROQ_MODEL` already exists in Vercel, set it to `openai/gpt-oss-120b` or remove it to use the app default. The UI shows whether a key is configured, and a report shows whether Groq actually returned an explanation.
+4. Deploy or redeploy, then open `/health`. It should return `status: ok`, `providers.groq: true`, and `max_upload_mb: 4`. If the key was added after an earlier deployment, redeploy so the new environment value is applied.
+
+Vercel Functions limit request bodies to 4.5 MB, so media uploads are capped at 4 MB on Vercel (including multipart overhead). Other hosts use `MAX_UPLOAD_MB`. The optional Gemini image review requires a separate `GEMINI_API_KEY` and user opt-in.
 
 ## Deploy on Render
 
@@ -71,7 +82,7 @@ node --check static/app.js
 
 ## Safety, privacy, and disclosure
 
-CyberGuard does not persist submitted content on the server. Browser history stores short report summaries and finding labels locally and can be cleared in the History view. For optional text explanations, the server sends sanitized finding labels to the configured provider. The image review has a separate opt-in because it sends the selected image to Gemini. Do not submit secrets or sensitive personal information. Uploads are limited by `MAX_UPLOAD_MB`.
+CyberGuard does not save submitted content. Browser history stores short report summaries and finding labels locally and can be cleared in the History view. For optional text explanations, the server sends sanitized finding labels to the configured provider. The image review has a separate opt-in because it sends the selected image to Gemini. Do not submit secrets or sensitive personal information. Vercel uploads are capped at 4 MB; other hosts use `MAX_UPLOAD_MB`.
 
 This is a new standalone implementation. Pramanix AI was used only as a product-structure reference; this repository does not copy from or modify it. Before presenting, check the organizers' rules on AI-assisted code, pre-existing work, and outside libraries, and accurately describe your team's contributions.
 

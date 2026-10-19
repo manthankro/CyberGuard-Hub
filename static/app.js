@@ -1208,16 +1208,14 @@ function checkHealth() {
       const statusLabel = $('#service-status');
       const modelLabel = $('#model-status');
 
-      if (statusLabel) statusLabel.textContent = 'Engine Online';
+      if (statusLabel) statusLabel.textContent = 'Ready to check';
+      const limitLabel = $('#upload-limit');
+      if (limitLabel && Number.isFinite(data.max_upload_mb)) limitLabel.textContent = String(data.max_upload_mb);
       if (modelLabel) {
-        if (data.providers?.groq && data.providers?.gemini) {
-          modelLabel.textContent = 'Groq Primary · Gemini Fallback';
-        } else if (data.providers?.gemini) {
-          modelLabel.textContent = 'Gemini AI · Local Fallback';
-        } else if (data.providers?.groq) {
-          modelLabel.textContent = 'Groq AI · Local Fallback';
+        if (data.providers?.groq) {
+          modelLabel.textContent = 'Groq key set · local fallback ready';
         } else {
-          modelLabel.textContent = 'Local Heuristics · Zero Leakage';
+          modelLabel.textContent = 'Local checks ready · no AI key';
         }
       }
     })
