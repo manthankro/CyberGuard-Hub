@@ -41,7 +41,7 @@ The private GitHub repository is [manthankro/CyberGuard-Hub](https://github.com/
 
 1. In Render, select **New + → Blueprint** and connect the repository.
 2. Render reads `render.yaml` and builds the included Dockerfile.
-3. Add `GROQ_API_KEY` and/or `GEMINI_API_KEY` in the service's secret environment variables if you want AI explanations.
+3. Add `GROQ_API_KEY` and/or `GEMINI_API_KEY` in the service's secret environment variables if you want AI explanations. The blueprint prompts for both as optional secrets.
 4. Deploy and verify `/health`, then open the service URL.
 
 The container binds to Render's `PORT`; `/health` is configured as the service health check. Any Docker-capable host can use the same image. The free Render service can sleep while idle.
@@ -61,6 +61,7 @@ The container binds to Render's `PORT`; `/health` is configured as the service h
 ```bash
 pip install -r requirements.txt
 pytest -q
+node --check static/app.js
 ```
 
 ## Safety, privacy, and disclosure
