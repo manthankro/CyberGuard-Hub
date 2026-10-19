@@ -651,13 +651,15 @@ async function runAnalysis() {
 // --------------------------------------------------------------------------
 function renderEvidenceReport(data, rawInput) {
   const score = data.risk_score;
+  const hasNumericScore = Number.isFinite(score);
+  const isMediaReport = currentTool === 'media';
   const risk = data.risk_level || 'inconclusive';
   let html = '';
 
   // 1. Threat Score Banner & Circular Gauge
   const radius = 30;
   const circumference = 2 * Math.PI * radius;
-  const strokeOffset = score !== undefined ? circumference - (score / 100) * circumference : circumference;
+  const strokeOffset = hasNumericScore ? circumference - (score / 100) * circumference : circumference;
   const strokeColor = risk === 'high' ? 'var(--red)' : risk === 'medium' ? 'var(--amber)' : risk === 'low' ? 'var(--mint)' : 'var(--text-sub)';
 
   html += `
@@ -671,19 +673,19 @@ function renderEvidenceReport(data, rawInput) {
                   stroke-dashoffset="${strokeOffset}"></circle>
         </svg>
         <div class="gauge-score-value">
-          <b>${score !== undefined ? score : '—'}</b>
-          <small>SIGNAL / 100</small>
+          <b>${hasNumericScore ? score : '—'}</b>
+          <small>${isMediaReport ? 'NOT SCORED' : 'SIGNAL / 100'}</small>
         </div>
       </div>
       <div class="gauge-verdict-col">
         <div class="verdict-header-row">
-          <span class="verdict-badge risk-${escapeHtml(risk)}">${escapeHtml(risk)} threat signals</span>
+          <span class="verdict-badge risk-${escapeHtml(risk)}">${isMediaReport ? 'authenticity inconclusive' : escapeHtml(risk) + ' threat signals'}</span>
           ${data.analysis_mode ? `<span class="tag-pill">${escapeHtml(data.analysis_mode)}</span>` : ''}
         </div>
         <div class="verdict-desc">
-          ${score >= 55 ? 'High risk indicators detected. Treat content with caution.' : score >= 20 ? 'Elevated suspicion cues observed. Verify independently.' : 'Few configured warning signals matched. This does not certify safety.'}
+          ${isMediaReport ? 'This inspection does not determine whether media is authentic, AI-generated, or manipulated.' : score >= 55 ? 'High risk indicators detected. Treat content with caution.' : score >= 20 ? 'Elevated suspicion cues observed. Verify independently.' : 'Few configured warning signals matched. This does not certify safety.'}
         </div>
-        <p class="score-explainer"><b>${score !== undefined ? "Signal score: " + score + "/100." : "No score was returned."}</b> Rule-based indicator points, not a probability or a definitive prediction. The score can miss scams and can flag legitimate content.</p>
+        <p class="score-explainer"><b>${hasNumericScore ? "Signal score: " + score + "/100." : "Authenticity not scored."}</b> ${escapeHtml(data.score_explanation || (isMediaReport ? 'File metadata is not a deepfake detector.' : 'Rule-based indicator points, not a probability or a definitive prediction.'))}</p>
       </div>
     </div>
   `;
@@ -1449,6 +1451,12 @@ function checkHealth() {
       if (statusLabel) statusLabel.textContent = 'Ready to check';
       const limitLabel = $('#upload-limit');
       if (limitLabel && Number.isFinite(data.max_upload_mb)) limitLabel.textContent = String(data.max_upload_mb);
+      const mediaAuthStatus = $('#media-auth-status');
+      if (mediaAuthStatus) {
+        mediaAuthStatus.textContent = data.video_authenticity_configured
+          ? 'Video model scan is configured on this server.'
+          : 'Video model scan is unavailable: configure both Sightengine credentials in the hosting environment, then redeploy.';
+      }
       if (modelLabel) {
         const configured = [];
         if (data.providers?.groq) configured.push('Groq');
