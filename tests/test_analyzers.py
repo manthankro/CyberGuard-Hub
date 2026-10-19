@@ -31,6 +31,10 @@ def test_url_checks_suspicious_indicators_without_network():
 def test_malformed_url_returns_cautious_result():
     assert analyze_url("http://[broken") ["risk_level"] == "medium"
 
+def test_url_scanner_flags_typo_lookalike_domain():
+    result=analyze_url("https://paypa1.com/login")
+    assert any(item["rule_id"] == "URL-TYPOLOOKALIKE" for item in result["findings"])
+
 def test_code_audit_finds_sql_and_secret_patterns():
     result=analyze_code('cursor.execute("SELECT * FROM x WHERE id=" + value)\nAPI_KEY = "this_is_a_secret_value"')
     assert {f["title"] for f in result["findings"]} >= {"SQL injection risk","Hard-coded credential-like value"}

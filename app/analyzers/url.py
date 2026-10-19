@@ -4,6 +4,26 @@ from urllib.parse import urlsplit
 
 BRANDS = ("google", "microsoft", "paypal", "amazon", "apple", "facebook", "instagram", "netflix")
 SHORTENERS = {"bit.ly", "tinyurl.com", "t.co", "is.gd", "cutt.ly", "rb.gy"}
+MULTI_LABEL_SUFFIXES = {"co.uk", "org.uk", "com.au", "net.au", "co.in", "com.br", "co.jp"}
+
+
+def _within_one_edit(first: str, second: str) -> bool:
+    if abs(len(first) - len(second)) > 1:
+        return False
+    left = right = edits = 0
+    while left < len(first) and right < len(second):
+        if first[left] == second[right]:
+            left += 1
+            right += 1
+            continue
+        edits += 1
+        if edits > 1:
+            return False
+        if len(first) >= len(second):
+            left += 1
+        if len(second) >= len(first):
+            right += 1
+    return edits + (left < len(first) or right < len(second)) <= 1
 
 
 def _finding(rule_id: str, category: str, evidence: str, why: str, recommendation: str, severity: str = "medium") -> dict:
@@ -52,12 +72,18 @@ def analyze_url(value: str) -> dict:
         add("URL-ODD-HOST", "Unusual hostname pattern", host, "Repeated hyphens or long digit runs are sometimes used in disposable or deceptive domains.", "Verify the exact domain independently.")
 
     labels = host.split(".")
-    # A simple heuristic: brand text in non-root labels can be deceptive. This
-    # deliberately avoids claiming that a URL is malicious from one cue alone.
-    root_labels = labels[-2:] if len(labels) >= 2 else labels
+    suffix = ".".join(labels[-2:]) if len(labels) >= 2 else host
+    root_index = -3 if suffix in MULTI_LABEL_SUFFIXES else -2
+    root_label = labels[root_index] if len(labels) >= abs(root_index) else (labels[-1] if labels else "")
+    subdomain_labels = labels[:root_index] if len(labels) >= abs(root_index) else []
+    # Keep the registrable label separate from subdomains, so e.g.
+    # paypal-login.com isn't mislabeled as a paypal.com subdomain.
     for brand in BRANDS:
-        if any(brand in label for label in labels[:-1]) and not any(brand == label for label in root_labels):
+        if any(brand in label for label in subdomain_labels):
             add("URL-BRAND-SUBDOMAIN", "Brand-like text in subdomain", brand, "A familiar brand name in a subdomain does not mean that brand controls the registered domain.", "Check the actual registered domain; open the brand's official site independently.", "high")
+            break
+        if root_label != brand and (brand in root_label or _within_one_edit(root_label, brand)):
+            add("URL-TYPOLOOKALIKE", "Brand-like or typo-lookalike registered domain", root_label, f"The registered domain resembles the name {brand}; this heuristic may also match unrelated domains.", "Open the organisation's official domain from a bookmark or other trusted source.", "high")
             break
 
     score = min(95, sum(30 if item["severity"] == "high" else 18 for item in findings))
