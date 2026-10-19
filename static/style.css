@@ -2441,6 +2441,17 @@ button {
   }
 }
 
+
+@media (max-width: 600px) {
+  .tools-grid { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .section-header { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .app-footer { flex-direction: column; align-items: flex-start; gap: 8px; padding: 20px 16px; }
+  .report-actions-bar { flex-wrap: wrap; }
+  .panel-card { padding: 18px 14px; }
+  .module-tab-bar { overflow-x: auto; }
+}
+
 /* --------------------------------------------------------------------------
    Print Stylesheet (For PDF / Print Dossiers)
    -------------------------------------------------------------------------- */

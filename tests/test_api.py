@@ -49,3 +49,19 @@ def test_vercel_upload_limit_is_safe(monkeypatch):
 def test_local_upload_limit_uses_configuration(monkeypatch):
     monkeypatch.delenv("VERCEL", raising=False)
     assert client.get("/health").json()["max_upload_mb"] >= 1
+
+
+
+def test_malformed_png_returns_safe_finding():
+    import base64
+
+    # Corrupt IDAT checksum: a realistic truncated or damaged upload.
+    malformed_png = base64.b64decode(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jMxkAAAAASUVORK5CYII="
+    )
+    response = client.post(
+        "/api/analyze/media",
+        files={"file": ("damaged.png", malformed_png, "image/png")},
+    )
+    assert response.status_code == 200
+    assert any(item["rule_id"] == "MEDIA-IMAGE-INVALID" for item in response.json()["signals"])

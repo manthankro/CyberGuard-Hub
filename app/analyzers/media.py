@@ -71,7 +71,7 @@ def inspect_media(data: bytes, filename: str, content_type: str) -> dict:
                         result["signals"].append({"rule_id": "MEDIA-SOFTWARE-EDITED", "category": "Post-processing software indicated in metadata", "evidence": f"Software signature: {software_tag}", "why_it_matters": "The file's metadata explicitly references editing or generation software.", "severity": "medium"})
                 if image.width * image.height > 40_000_000:
                     result["signals"].append({"rule_id": "MEDIA-LARGE-IMAGE", "category": "Large image dimensions", "evidence": f"{image.width} × {image.height}", "why_it_matters": "Very large images may require extra care when processing or sharing.", "severity": "low"})
-        except (UnidentifiedImageError, OSError, Image.DecompressionBombError, Image.DecompressionBombWarning):
+        except (UnidentifiedImageError, OSError, SyntaxError, ValueError, Image.DecompressionBombError, Image.DecompressionBombWarning):
             result["signals"].append({"rule_id": "MEDIA-IMAGE-INVALID", "category": "Image could not be safely decoded", "evidence": "Image signature or structure was not recognized", "why_it_matters": "The declared image type does not match a supported, readable image.", "severity": "medium"})
     elif content_type.startswith("video/") or content_type.startswith("audio/"):
         if not data:
