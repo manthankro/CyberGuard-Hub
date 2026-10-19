@@ -2556,3 +2556,14 @@ button {
     color: #0f172a !important;
   }
 }
+
+
+/* Consent based breach lookup */
+.exposure-panel { max-width: 760px; margin: 0 auto; }
+.exposure-form { display: grid; gap: 14px; padding: 20px; }
+.exposure-form input[type="email"] { width: 100%; min-height: 48px; padding: 12px 14px; border: 1px solid var(--border, #263346); border-radius: 10px; background: var(--panel, #0d1522); color: var(--text, #e8eef8); font: inherit; }
+.exposure-consent { margin: 0; }
+.exposure-form button { justify-self: start; }
+.exposure-result { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0 20px 18px; padding: 16px; border-radius: 12px; background: rgba(8, 16, 29, .72); color: var(--text, #e8eef8); }
+.exposure-panel > .text-sub { padding: 0 20px 20px; line-height: 1.6; }
+.exposure-panel a { color: var(--cyan, #67e8f9); }
