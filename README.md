@@ -1,42 +1,60 @@
 # CyberGuard Hub
 
-A standalone, deployable digital-safety dashboard for the Navratri Codeathon 2026 cybersecurity track. It brings four focused tools into one interface: suspicious-message signals, URL text heuristics, cautious media metadata inspection, and lightweight code-pattern auditing.
+**A unified digital-safety workspace for the Navratri Codeathon cybersecurity track.** CyberGuard brings scam-message analysis, phishing URL indicators, media inspection, code auditing, and correlated message triage into one dashboard. Every module returns observable signals, plain-language guidance, and clear limitations.
 
-## What works
+## The product
 
-- **Scam message analyzer:** deterministic checks for urgency, credential/OTP requests, payment lures, links, and impersonation cues. Signals are language-pattern based and include a few Hindi/Gujarati terms; this is not broad multilingual understanding.
-- **Link scanner:** inspects the URL string for patterns such as punycode, raw IPs, shorteners, long domains, and brand-like subdomains. It deliberately does not fetch URLs, query registration/reputation services, or certify safety. This avoids turning the scanner into an SSRF proxy.
-- **Media check:** accepts image/audio/video uploads; for images it reports basic format, dimensions, and EXIF presence. It does not identify deepfakes or authentic media. Audio/video are not parsed in this prototype.
-- **Code audit:** checks a small set of patterns for SQL/shell injection, hard-coded credentials, unsafe deserialization, and selected Solidity anti-patterns. It is not a full parser or replacement for language-specific scanners.
-- **Optional Gemini explanation:** if configured, Gemini explains deterministic findings. The app still works without a key, and falls back to local analysis if the provider is unavailable. AI explanations are advisory and can be wrong.
+- **Smart triage:** paste an SMS, email, or chat. The app checks its wording and every embedded link together, then explains the correlated signals in one report.
+- **Scam message analyzer:** deterministic checks for urgency, credential/OTP requests, payment lures, links, and impersonation cues. Includes selected English, Hindi, and Gujarati patterns; this is not broad multilingual understanding.
+- **Link scanner:** checks URL text for punycode, raw IPs, shorteners, long domains, brand-like subdomains, and other patterns. It never visits the destination, calls a reputation service, or declares a link safe.
+- **Media inspection:** accepts image, audio, and video uploads. For images, reports format, dimensions, and EXIF presence. It does not detect deepfakes; audio and video are not parsed in this prototype.
+- **Code audit:** checks selected patterns for SQL/shell injection, hard-coded credentials, unsafe deserialization, dynamic code execution, XSS sinks, disabled TLS verification, and Solidity anti-patterns. Findings include line numbers and safer next steps. It is not a full parser.
+- **AI explanation:** optional Groq-first, Gemini-fallback provider routing. AI receives sanitized finding labels, not the submitted message, source code, full URL, or uploaded file. If neither provider is configured or both are unavailable, local analysis still works.
+- **On-device report workspace:** scan history stores only short summaries and finding labels in this browser's local storage. It does not save original submitted content. Reports can be copied, exported as JSON, or printed/saved as PDF.
+- **Safety and privacy UI:** consistent module navigation, demo inputs, upload limits, clear risk semantics, and a privacy explainer.
 
-Scores are **indicator scores, not calibrated probabilities**. A low score never means that content is safe.
+Scores are **indicator scores, not calibrated probabilities**. A low score never means that content is safe. The tool is a hackathon prototype, not a security certification or incident-response service.
 
 ## Run locally
 
 Requirements: Python 3.11 or newer.
 
 ```bash
-cd cyberguard-hub
+git clone https://github.com/manthankro/CyberGuard-Hub.git
+cd CyberGuard-Hub
 python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\\Scripts\\activate
 pip install -r requirements.txt
-cp .env.example .env             # Optional: add GEMINI_API_KEY
+cp .env.example .env             # Optional: add provider keys
 uvicorn app.main:app --reload
 ```
 
-Open <http://127.0.0.1:8000>. API documentation is at `/docs`; liveness/configuration is at `/health`.
+Open <http://127.0.0.1:8000>. Interactive API documentation is at `/docs`; service and provider status is at `/health`.
 
-Without Gemini, every local analyzer remains usable. To enable optional explanations, create a Gemini API key in the provider console and set it only as the `GEMINI_API_KEY` environment variable or in an untracked local `.env` file. Never commit credentials or put them in frontend code.
+### Optional AI setup
 
-## Deploy on Render (Docker)
+Set `GROQ_API_KEY` and/or `GEMINI_API_KEY` as environment secrets. When both are present, Groq is tried first and Gemini is used if Groq is unavailable. Do not put keys in frontend files or commit `.env`. Local analyzers work without either key. Provider models can be changed through `GROQ_MODEL` and `GEMINI_MODEL`.
 
-1. Push this folder as a new GitHub repository.
-2. In Render, choose **New + → Blueprint**, connect the new repository, and let it read `render.yaml`.
-3. Set `GEMINI_API_KEY` in the service's secret environment variables if you want AI explanations. Leave it unset for local-rule-only mode.
-4. Deploy, then check `/health` and open the service root.
+## Deploy on Render
 
-The included Dockerfile binds to Render's `PORT`, and the blueprint uses `/health` as its health check. Any Docker-capable host can use the same image. The free Render instance may sleep when idle; the first request after inactivity can take longer.
+The private GitHub repository is [manthankro/CyberGuard-Hub](https://github.com/manthankro/CyberGuard-Hub).
+
+1. In Render, select **New + → Blueprint** and connect the repository.
+2. Render reads `render.yaml` and builds the included Dockerfile.
+3. Add `GROQ_API_KEY` and/or `GEMINI_API_KEY` in the service's secret environment variables if you want AI explanations.
+4. Deploy and verify `/health`, then open the service URL.
+
+The container binds to Render's `PORT`; `/health` is configured as the service health check. Any Docker-capable host can use the same image. The free Render service can sleep while idle.
+
+## API
+
+- `POST /api/analyze/triage` — `{"content":"message with a link"}`
+- `POST /api/analyze/text` — `{"text":"..."}`
+- `POST /api/analyze/url` — `{"url":"https://..."}`
+- `POST /api/analyze/code` — `{"code":"..."}`
+- `POST /api/analyze/media` — multipart form field `file`
+- `GET /api/modules`
+- `GET /health`
 
 ## Tests
 
@@ -45,33 +63,8 @@ pip install -r requirements.txt
 pytest -q
 ```
 
-## API
+## Safety, privacy, and disclosure
 
-- `POST /api/analyze/text` — `{"text":"..."}`
-- `POST /api/analyze/url` — `{"url":"https://..."}`
-- `POST /api/analyze/code` — `{"code":"..."}`
-- `POST /api/analyze/media` — multipart form field `file`
-- `GET /health`
+CyberGuard does not persist submitted content on the server. Browser history stores a short report locally and can be cleared in the History view. For optional AI explanations, the server sends sanitized finding labels to the configured provider; do not submit secrets or sensitive personal information. Uploads are limited by `MAX_UPLOAD_MB`.
 
-## Safety and privacy notes
-
-The service does not persist submitted data. Gemini receives the analyzer's findings/context when configured; avoid sending secrets or sensitive personal data. Upload size is limited by `MAX_UPLOAD_MB`. This is a hackathon prototype, not professional incident response or a security certification. A malicious or compromised URL should not be opened from the report; independently verify via known-good channels.
-
-## Hackathon disclosure
-
-This repository is a new, standalone implementation and does not copy from or modify Pramanix AI. It uses optional third-party Gemini services and open-source dependencies listed in `requirements.txt`. Before presenting, check the organizers' rules on AI-assisted code, pre-existing work, outside libraries, and disclosure; describe your team's actual contributions accurately.
-
-## Push this project to a new GitHub repository
-
-Create an empty repository on GitHub (do not initialize it with a README), then from this folder run:
-
-```bash
-git init
-git add .
-git commit -m "Build CyberGuard Hub prototype"
-git branch -M main
-git remote add origin https://github.com/YOUR-USERNAME/cyberguard-hub.git
-git push -u origin main
-```
-
-Replace `YOUR-USERNAME` with your GitHub username. Confirm `.env` is not staged before pushing. This workspace has not created or published a GitHub repository.
+This is a new standalone implementation. Pramanix AI was used only as a product-structure reference; this repository does not copy from or modify it. Before presenting, check the organizers' rules on AI-assisted code, pre-existing work, and outside libraries, and accurately describe your team's contributions.
