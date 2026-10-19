@@ -15,7 +15,7 @@ PATTERNS = [
         r"(?:\b(?:pay|send|transfer)\b.{0,50}\b(?:fee|tax|deposit|processing charge|payment)\b)|(?:\b(?:prize|lottery|cashback|refund|bonus|gift card|winner)\b.{0,60}\b(?:claim|pay|fee|deposit|click|transfer|send|won)\b)|(?:\b(?:claim|pay|fee|deposit|transfer|send)\b.{0,60}\b(?:prize|lottery|cashback|refund|bonus|gift card|reward)\b)|(?:પૈસા મોકલો.{0,30}(?:ઇનામ|રિફંડ)|ઇનામ.{0,30}(?:મેળવવા|મેળવો|ફી|ચુકવો))|(?:इनाम.{0,30}(?:पाने|पाएं|पाओ|शुल्क|भुगतान)|(?:शुल्क|पैसे भेजें).{0,30}इनाम)",
         re.I), "medium", "Unexpected rewards tied to a fee, payment, or click are common social-engineering hooks.",
         "Do not pay or share financial details until the offer is verified through an official channel."),
-    ("TEXT-LINK", "Link included", re.compile(r"https?://\S+|\bwww\.\S+", re.I), "low",
+    ("TEXT-LINK", "Suspicious link", re.compile(r"https?://\S+|\bwww\.\S+", re.I), "low",
         "A link's presence alone does not make a message malicious, but unexpected links deserve a destination check.",
         "Check the destination independently and open the official site yourself if unsure."),
     ("TEXT-IMPERSONATION", "Organisation or authority claim", re.compile(
