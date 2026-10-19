@@ -45,7 +45,7 @@ def upload_limit_mb() -> int:
 
 @app.get("/health")
 def health():
-    return {"status":"ok","providers":provider_status(),"version":app.version,"max_upload_mb":upload_limit_mb(),"groq_model":settings.groq_model,"gemini_model":settings.gemini_model,"ai_provider_order":provider_status()["order"]}
+    return {"status":"ok","providers":provider_status(),"version":app.version,"max_upload_mb":upload_limit_mb(),"groq_model":settings.groq_model,"gemini_model":settings.gemini_model,"ai_provider_order":provider_status()["order"],"video_authenticity_configured":bool(settings.sightengine_api_user and settings.sightengine_api_secret),"email_exposure_configured":bool(settings.hibp_api_key)}
 from app.analyzers.text import PATTERNS as TEXT_PATTERNS
 from app.analyzers.code import RULES as CODE_RULES
 
