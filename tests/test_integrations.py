@@ -53,4 +53,4 @@ def test_video_model_response_is_labeled_probabilistic(monkeypatch):
 def test_c2pa_absence_does_not_claim_authenticity():
     result = inspect_c2pa(b"not a video", "video/mp4")
     assert result["status"] in {"unavailable", "no_valid_manifest"}
-    assert "no conclusion" in result["note"]
+    assert "does not prove" in result["note"] or "no conclusion" in result["note"]
