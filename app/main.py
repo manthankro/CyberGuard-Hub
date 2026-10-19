@@ -77,7 +77,7 @@ def modules():
         {"id":"triage","name":"Message triage","description":"Correlate scam language with links embedded in a message."},
         {"id":"text","name":"Scam message","description":"Find urgency, credential, payment, and impersonation cues."},
         {"id":"url","name":"Link scanner","description":"Inspect URL text for suspicious destination patterns; never fetches the link."},
-        {"id":"media","name":"Media verification","description":"Inspect image file signatures and metadata; optional Gemini visual observations are not a deepfake verdict."},
+        {"id":"media","name":"Media verification","description":"Inspect image files and media fingerprints; optional Gemini image/video descriptions are not deepfake detection."},
         {"id":"code","name":"Code audit","description":"Find selected vulnerability patterns with line references and fixes."},
     ]}
 async def with_domain_status(url: str) -> dict:
