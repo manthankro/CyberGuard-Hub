@@ -107,3 +107,11 @@ def test_invalid_url_has_explicit_invalid_status():
 def test_common_low_signal_url_stays_low_risk():
     result = analyze_url("https://example.com/login")
     assert result["risk_level"] == "low"
+
+
+def test_triage_detects_bare_domain_without_scheme():
+    from app.analyzers.triage import analyze_triage
+
+    result = analyze_triage("Please check example.com/account")
+    assert len(result["url_analyses"]) == 1
+    assert result["url_analyses"][0]["host"] == "example.com"
