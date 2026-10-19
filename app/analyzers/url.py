@@ -100,7 +100,7 @@ def analyze_url(value: str) -> dict:
     # paypal-login.com isn't mislabeled as a paypal.com subdomain.
     matched_brand = None
     for brand in BRANDS:
-        if any(brand in label for label in subdomain_labels):
+        if any(label == brand or label.startswith(brand + "-") or label.endswith("-" + brand) for label in subdomain_labels):
             matched_brand = brand
             add("URL-BRAND-SUBDOMAIN", "Brand-like text in subdomain", brand, "A familiar brand name in a subdomain does not mean that brand controls the registered domain.", "Check the actual registered domain; open the brand's official site independently.", "high")
             break
