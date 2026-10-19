@@ -25,7 +25,7 @@ def inspect_media(data: bytes, filename: str, content_type: str) -> dict:
             "Compare with an original from a trusted source if authenticity matters.",
             "Treat metadata and visual clues as weak signals; they can be removed or edited.",
         ],
-        "disclaimer": "This is not a forensic deepfake detector. File properties and metadata cannot prove whether media is authentic or AI-generated.",
+        "disclaimer": "This prototype does not detect deepfakes or determine authenticity. File properties and metadata cannot prove whether media is authentic or AI-generated.",
     }
     if content_type.startswith("image/"):
         try:
