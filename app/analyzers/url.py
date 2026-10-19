@@ -104,7 +104,7 @@ def analyze_url(value: str) -> dict:
             matched_brand = brand
             add("URL-BRAND-SUBDOMAIN", "Brand-like text in subdomain", brand, "A familiar brand name in a subdomain does not mean that brand controls the registered domain.", "Check the actual registered domain; open the brand's official site independently.", "high")
             break
-        if root_label != brand and (brand in root_label or _within_one_edit(root_label, brand)):
+        if root_label != brand and (root_label.startswith(brand + "-") or root_label.endswith("-" + brand) or _within_one_edit(root_label, brand)):
             matched_brand = brand
             add("URL-TYPOLOOKALIKE", "Brand-like or typo-lookalike registered domain", root_label, f"The registered domain resembles the name {brand}; this heuristic may also match unrelated domains.", "Open the organisation's official domain from a bookmark or other trusted source.", "high")
             break
