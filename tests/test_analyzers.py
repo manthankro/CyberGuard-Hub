@@ -7,6 +7,13 @@ def test_scam_text_exposes_matching_cues():
     result=analyze_text("URGENT: send your OTP now or account blocked. http://bad.test")
     assert result["risk_level"] == "high"
     assert {x["category"] for x in result["findings"]} >= {"Urgency or threat","Credential or OTP request","Suspicious link"}
+    assert all(x.get("why_it_matters") and x.get("recommendation") for x in result["findings"])
+
+def test_regional_language_rules_include_hindi_and_gujarati():
+    hindi=analyze_text("तुरंत OTP भेजें और इनाम पाएं")
+    gujarati=analyze_text("તાત્કાલિક તમારો ઓટીપી મોકલો અને ઇનામ મેળવો")
+    assert {x["category"] for x in hindi["findings"]} >= {"Urgency or threat","Credential or OTP request","Payment or prize lure"}
+    assert {x["category"] for x in gujarati["findings"]} >= {"Urgency or threat","Credential or OTP request","Payment or prize lure"}
 
 def test_benign_text_is_not_declared_safe():
     result=analyze_text("Can we meet at 4pm?")
@@ -18,6 +25,8 @@ def test_url_checks_suspicious_indicators_without_network():
     assert result["risk_score"] > 0
     assert result["findings"]
     assert "does not visit" in result["disclaimer"]
+    assert any(item["rule_id"] == "URL-BRAND-SUBDOMAIN" for item in result["findings"])
+    assert all(item.get("why_it_matters") and item.get("recommendation") for item in result["findings"])
 
 def test_malformed_url_returns_cautious_result():
     assert analyze_url("http://[broken") ["risk_level"] == "medium"
@@ -31,6 +40,18 @@ def test_media_does_not_claim_authenticity():
     result=inspect_media(b"not actually media", "sample.mp4", "video/mp4")
     assert result["assessment"] == "inconclusive"
     assert "does not detect deepfakes" in result["disclaimer"]
+
+def test_media_image_hash_and_signature_inspection():
+    from PIL import Image
+    import io
+    output=io.BytesIO()
+    Image.new("RGB",(4,3),(20,40,60)).save(output,format="PNG")
+    result=inspect_media(output.getvalue(),"sample.jpg","image/jpeg")
+    assert result["format"] == "PNG"
+    assert result["dimensions"] == {"width":4,"height":3}
+    assert len(result["sha256"]) == 64
+    assert {item["rule_id"] for item in result["signals"]} >= {"MEDIA-MIME-MISMATCH","MEDIA-EXTENSION-MISMATCH"}
+    assert result["assessment"] == "inconclusive"
 
 def test_triage_correlates_embedded_link_without_fetching():
     from app.analyzers.triage import analyze_triage

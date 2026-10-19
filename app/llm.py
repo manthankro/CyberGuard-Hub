@@ -48,3 +48,25 @@ def explain_findings(task: str, data: dict) -> tuple[str | None, str | None]:
         except Exception as exc:
             log.warning("Gemini explanation unavailable (%s)",type(exc).__name__)
     return None,None
+
+
+def review_image_visual_clues(data: bytes, mime_type: str) -> tuple[str | None, str | None]:
+    """Opt-in image observations only; Gemini is not used as a deepfake classifier."""
+    if not settings.gemini_api_key:
+        return None, None
+    try:
+        from google import genai
+        from google.genai import types
+        client = genai.Client(api_key=settings.gemini_api_key)
+        response = client.models.generate_content(
+            model=settings.gemini_model,
+            contents=[
+                "Describe only directly visible visual inconsistencies a person may wish to inspect in this image. Do not infer that the image is authentic, fake, AI-generated, or manipulated. If no clear inconsistency is visible, say so. This is not forensic analysis.",
+                types.Part.from_bytes(data=data, mime_type=mime_type),
+            ],
+        )
+        text = (response.text or "").strip()
+        return (text[:1200], "Gemini") if text else (None, None)
+    except Exception as exc:
+        log.warning("Opt-in Gemini visual review unavailable (%s)", type(exc).__name__)
+        return None, None

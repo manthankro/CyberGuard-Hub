@@ -15,7 +15,11 @@ def analyze_triage(content: str) -> dict:
     level = "high" if combined >= 55 else "medium" if combined >= 25 else "low"
     evidence = [f"Message: {item['category']} — {item['evidence']}" for item in text_result["findings"]]
     for result in url_results:
-        evidence.extend(f"Link ({result['host']}): {finding}" for finding in result["findings"])
+        evidence.extend(
+            f"Link ({result['host']}): {finding.get('category', 'Indicator')} — {finding.get('evidence', '')}"
+            if isinstance(finding, dict) else f"Link ({result['host']}): {finding}"
+            for finding in result["findings"]
+        )
     if not evidence:
         evidence.append("No configured high-signal patterns matched. Absence of a match does not establish safety.")
     return {

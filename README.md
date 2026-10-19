@@ -5,11 +5,11 @@
 ## The product
 
 - **Smart triage:** paste an SMS, email, or chat. The app checks its wording and every embedded link together, then explains the correlated signals in one report.
-- **Scam message analyzer:** deterministic checks for urgency, credential/OTP requests, payment lures, links, and impersonation cues. Includes selected English, Hindi, and Gujarati patterns; this is not broad multilingual understanding.
-- **Link scanner:** checks URL text for punycode, raw IPs, shorteners, long domains, brand-like subdomains, and other patterns. It never visits the destination, calls a reputation service, or declares a link safe.
-- **Media inspection:** accepts image, audio, and video uploads. For images, reports format, dimensions, and EXIF presence. It does not detect deepfakes; audio and video are not parsed in this prototype.
-- **Code audit:** checks selected patterns for SQL/shell injection, hard-coded credentials, unsafe deserialization, dynamic code execution, XSS sinks, disabled TLS verification, and Solidity anti-patterns. Findings include line numbers and safer next steps. It is not a full parser.
-- **AI explanation:** optional Groq-first, Gemini-fallback provider routing. AI receives sanitized finding labels, not the submitted message, source code, full URL, or uploaded file. If neither provider is configured or both are unavailable, local analysis still works.
+- **Scam message analyzer (Module 2):** transparent phrase rules for urgency, credential/OTP requests, payment lures, links, and impersonation cues. Includes selected English, Hindi (Devanagari), and Gujarati patterns; it is not broad multilingual understanding.
+- **URL scanner (Module 1):** checks URL text for punycode, raw IPs, shorteners, long/deep domains, user-info syntax, and brand-like subdomains. Each indicator explains why it matters and suggests a safer action. It never visits the destination, calls a reputation service, or declares a link safe.
+- **Code auditor (Module 4):** checks selected patterns for SQL/shell injection, hard-coded credentials, unsafe deserialization, dynamic code execution, XSS sinks, disabled TLS verification, and Solidity anti-patterns. Findings include rule IDs, line numbers, evidence, impact, and fixes. It is not a full parser.
+- **Media verification (Module 3):** inspects image signatures, MIME/extension mismatches, dimensions, metadata presence, and a SHA-256 file fingerprint. Audio/video uploads are hashed and sized but not parsed for authenticity. Optionally, after a separate unchecked consent box, a supported image can be sent to Gemini for visible inconsistency observations. This is not a forensic deepfake detector and never returns an authenticity verdict.
+- **Explainable cybersecurity:** findings include evidence, why a signal matters, and a next step. Scores are indicator scores—not probabilities. Optional Groq-first, Gemini-fallback text explanations receive sanitized labels, not the submitted message, source code, or full URL. The optional image review is a distinct opt-in and sends that selected image to Gemini. If providers are unavailable, local analysis still works.
 - **On-device report workspace:** scan history stores only short summaries and finding labels in this browser's local storage. It does not save original submitted content. Reports can be copied, exported as JSON, or printed/saved as PDF.
 - **Safety and privacy UI:** consistent module navigation, demo inputs, upload limits, clear risk semantics, and a privacy explainer.
 
@@ -41,7 +41,7 @@ The GitHub repository is [manthankro/CyberGuard-Hub](https://github.com/manthank
 
 1. In Render, select **New + → Blueprint** and connect the repository.
 2. Render reads `render.yaml` and builds the included Dockerfile.
-3. Add `GROQ_API_KEY` and/or `GEMINI_API_KEY` in the service's secret environment variables if you want AI explanations. The blueprint prompts for both as optional secrets.
+3. Add `GROQ_API_KEY` and/or `GEMINI_API_KEY` in the service's secret environment variables if you want optional AI explanations. Gemini is also required for the explicitly opted-in image observations. The blueprint prompts for both as optional secrets.
 4. Deploy and verify `/health`, then open the service URL.
 
 The container binds to Render's `PORT`; `/health` is configured as the service health check. Any Docker-capable host can use the same image. The free Render service can sleep while idle.
@@ -52,7 +52,7 @@ The container binds to Render's `PORT`; `/health` is configured as the service h
 - `POST /api/analyze/text` — `{"text":"..."}`
 - `POST /api/analyze/url` — `{"url":"https://..."}`
 - `POST /api/analyze/code` — `{"code":"..."}`
-- `POST /api/analyze/media` — multipart form field `file`
+- `POST /api/analyze/media` — multipart fields `file` and optional `ai_visual_review=false`; set the latter to `true` only when you consent to send a supported image to Gemini. The optional review is image-only and not a deepfake verdict.
 - `GET /api/modules`
 - `GET /health`
 
@@ -66,6 +66,6 @@ node --check static/app.js
 
 ## Safety, privacy, and disclosure
 
-CyberGuard does not persist submitted content on the server. Browser history stores a short report locally and can be cleared in the History view. For optional AI explanations, the server sends sanitized finding labels to the configured provider; do not submit secrets or sensitive personal information. Uploads are limited by `MAX_UPLOAD_MB`.
+CyberGuard does not persist submitted content on the server. Browser history stores short report summaries and finding labels locally and can be cleared in the History view. For optional text explanations, the server sends sanitized finding labels to the configured provider. The image review has a separate opt-in because it sends the selected image to Gemini. Do not submit secrets or sensitive personal information. Uploads are limited by `MAX_UPLOAD_MB`.
 
 This is a new standalone implementation. Pramanix AI was used only as a product-structure reference; this repository does not copy from or modify it. Before presenting, check the organizers' rules on AI-assisted code, pre-existing work, and outside libraries, and accurately describe your team's contributions.

@@ -1,7 +1,8 @@
 from pathlib import Path
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 from app.config import settings
 from app.analyzers.text import analyze_text
@@ -9,7 +10,7 @@ from app.analyzers.url import analyze_url
 from app.analyzers.code import analyze_code
 from app.analyzers.media import inspect_media
 from app.analyzers.triage import analyze_triage
-from app.llm import explain_findings, provider_status
+from app.llm import explain_findings, provider_status, review_image_visual_clues
 
 app=FastAPI(title=settings.app_name,version="1.1.0",description="Evidence-led digital safety workspace")
 STATIC=Path(__file__).resolve().parent.parent/"static"
@@ -39,7 +40,7 @@ def modules():
         {"id":"triage","name":"Message triage","description":"Correlate scam language with links embedded in a message."},
         {"id":"text","name":"Scam message","description":"Find urgency, credential, payment, and impersonation cues."},
         {"id":"url","name":"Link scanner","description":"Inspect URL text for suspicious destination patterns; never fetches the link."},
-        {"id":"media","name":"Media inspection","description":"Review file properties and image metadata; does not detect deepfakes."},
+        {"id":"media","name":"Media verification","description":"Inspect image file signatures and metadata; optional Gemini visual observations are not a deepfake verdict."},
         {"id":"code","name":"Code audit","description":"Find selected vulnerability patterns with line references and fixes."},
     ]}
 @app.post("/api/analyze/triage")
@@ -67,7 +68,7 @@ def code_scan(request:CodeRequest):
     result["analysis_mode"]=f"static rules + {result['ai_provider']} explanation" if result["ai_provider"] else "local static rules"
     return result
 @app.post("/api/analyze/media")
-async def media_scan(file:UploadFile=File(...)):
+async def media_scan(file:UploadFile=File(...), ai_visual_review:bool=Form(False)):
     limit=settings.max_upload_mb*1024*1024
     data=await file.read(limit+1)
     if len(data)>limit: raise HTTPException(status_code=413,detail=f"File exceeds {settings.max_upload_mb} MB limit")
@@ -75,4 +76,19 @@ async def media_scan(file:UploadFile=File(...)):
     mime=file.content_type or "application/octet-stream"
     if not (mime.startswith("image/") or mime.startswith("video/") or mime.startswith("audio/")):
         raise HTTPException(status_code=415,detail="Upload an image, audio, or video file")
-    return inspect_media(data,file.filename or "upload",mime)
+    result=inspect_media(data,file.filename or "upload",mime)
+    if ai_visual_review:
+        if not mime.startswith("image/"):
+            raise HTTPException(status_code=422,detail="Optional Gemini visual review is available for images only")
+        if not settings.gemini_api_key:
+            raise HTTPException(status_code=503,detail="Add GEMINI_API_KEY on the server to enable optional visual review. Local file inspection is available without it.")
+        if result.get("format"):
+            actual_mime={"JPEG":"image/jpeg","PNG":"image/png","WEBP":"image/webp","GIF":"image/gif","BMP":"image/bmp","TIFF":"image/tiff"}.get(result["format"])
+            if not actual_mime:
+                raise HTTPException(status_code=415,detail="This image format is not supported for optional visual review")
+            observation,provider=await run_in_threadpool(review_image_visual_clues,data,actual_mime)
+            if observation:
+                result["visual_review"]={"provider":provider,"observations":observation,"label":"AI-assisted visual observations · not a deepfake/authenticity verdict"}
+            else:
+                result["visual_review"]={"provider":None,"observations":"The optional visual review is temporarily unavailable. The local file inspection is still available.","label":"No AI visual observations returned"}
+    return result
