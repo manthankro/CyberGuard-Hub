@@ -738,6 +738,21 @@ function renderEvidenceReport(data, rawInput) {
     `;
   }
 
+  // URL syntax and DNS status are independent from phishing risk.
+  if (data.url_validity) {
+    const state = data.url_validity.domain_status || 'unknown';
+    const label = !data.url_validity.format_valid ? 'Invalid URL format' :
+      state === 'resolves' ? 'Domain resolves' :
+      state === 'not_resolved' ? 'Domain not resolving' :
+      state === 'not_public' ? 'Not a public internet domain' : 'Domain status unknown';
+    html += `
+      <div class="notice-box mt-4">
+        <strong>Link status: ${escapeHtml(label)}</strong>
+        <span style="margin-left: 8px">${escapeHtml(data.url_validity.domain_note || '')}</span>
+        <span class="text-sub"> Format validity and DNS reachability do not mean a link is safe.</span>
+      </div>
+    `;
+  }
   // 5. Embedded Links (Smart Triage)
   if (data.url_analyses?.length) {
     html += `
