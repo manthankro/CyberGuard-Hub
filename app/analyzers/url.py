@@ -2,9 +2,14 @@ import ipaddress
 import re
 from urllib.parse import urlsplit
 
-BRANDS = ("google", "microsoft", "paypal", "amazon", "apple", "facebook", "instagram", "netflix")
-SHORTENERS = {"bit.ly", "tinyurl.com", "t.co", "is.gd", "cutt.ly", "rb.gy"}
-MULTI_LABEL_SUFFIXES = {"co.uk", "org.uk", "com.au", "net.au", "co.in", "com.br", "co.jp"}
+BRANDS = (
+    "google", "microsoft", "paypal", "amazon", "apple", "facebook", "instagram",
+    "netflix", "sbi", "hdfc", "icici", "paytm", "whatsapp", "telegram", "binance", "coinbase"
+)
+SHORTENERS = {"bit.ly", "tinyurl.com", "t.co", "is.gd", "cutt.ly", "rb.gy", "goo.gl", "ow.ly"}
+MULTI_LABEL_SUFFIXES = {"co.uk", "org.uk", "com.au", "net.au", "co.in", "com.br", "co.jp", "gov.in", "nic.in", "ac.in"}
+HIGH_RISK_TLDS = {"xyz", "top", "tk", "ml", "ga", "cf", "gq", "buzz", "club", "work", "icu", "loan", "click", "vip", "fit"}
+DECEPTIVE_KEYWORDS = re.compile(r"\b(login|verify|verification|signin|banking|account|update|recover|wallet|kyc|otp|secure|auth)\b", re.I)
 
 
 def _within_one_edit(first: str, second: str) -> bool:
@@ -44,6 +49,7 @@ def analyze_url(value: str) -> dict:
     if not host or any(c.isspace() for c in raw):
         return {"risk_score": 60, "risk_level": "medium", "host": host, "findings": [
             _finding("URL-PARSE", "URL could not be parsed", "Malformed or incomplete URL", "The destination cannot be inspected reliably.", "Do not open it; copy the link again or verify through a trusted source.", "high")],
+            "components": None,
             "recommendations": ["Do not open this link until you verify it through a trusted source."],
             "disclaimer": "This checks URL text only; it does not visit the site or establish safety."}
 
@@ -51,8 +57,10 @@ def analyze_url(value: str) -> dict:
     def add(rule, title, evidence, why, next_step, severity="medium"):
         findings.append(_finding(rule, title, evidence, why, next_step, severity))
 
+    is_ip = False
     try:
         ipaddress.ip_address(host)
+        is_ip = True
         add("URL-IP", "Raw IP address", host, "A numeric destination can obscure the organisation behind a link.", "Do not sign in; verify the destination through the organisation's official site.", "high")
     except ValueError:
         pass
@@ -76,13 +84,27 @@ def analyze_url(value: str) -> dict:
     root_index = -3 if suffix in MULTI_LABEL_SUFFIXES else -2
     root_label = labels[root_index] if len(labels) >= abs(root_index) else (labels[-1] if labels else "")
     subdomain_labels = labels[:root_index] if len(labels) >= abs(root_index) else []
+    
+    tld = labels[-1] if labels else ""
+    if tld in HIGH_RISK_TLDS:
+        add("URL-SUSPICIOUS-TLD", f"High-risk top-level domain (.{tld})", f".{tld}", f"Domains under .{tld} are frequently offered free or cheaply and abused in mass phishing campaigns.", "Exercise elevated caution with unfamiliar TLDs.", "medium")
+
+    # Check for deceptive words in path or query
+    full_path_query = (parsed.path or "") + " " + (parsed.query or "")
+    keyword_matches = DECEPTIVE_KEYWORDS.findall(full_path_query)
+    if keyword_matches and (host in SHORTENERS or root_label not in BRANDS):
+        add("URL-DECEPTIVE-PATH", "Sensitive keyword in URL path", ", ".join(set(keyword_matches[:4])), "Phishing campaigns frequently append keywords like 'login' or 'verify' to unbranded domains.", "Verify if the primary domain truly belongs to the service claiming to need verification.", "medium")
+
     # Keep the registrable label separate from subdomains, so e.g.
     # paypal-login.com isn't mislabeled as a paypal.com subdomain.
+    matched_brand = None
     for brand in BRANDS:
         if any(brand in label for label in subdomain_labels):
+            matched_brand = brand
             add("URL-BRAND-SUBDOMAIN", "Brand-like text in subdomain", brand, "A familiar brand name in a subdomain does not mean that brand controls the registered domain.", "Check the actual registered domain; open the brand's official site independently.", "high")
             break
         if root_label != brand and (brand in root_label or _within_one_edit(root_label, brand)):
+            matched_brand = brand
             add("URL-TYPOLOOKALIKE", "Brand-like or typo-lookalike registered domain", root_label, f"The registered domain resembles the name {brand}; this heuristic may also match unrelated domains.", "Open the organisation's official domain from a bookmark or other trusted source.", "high")
             break
 
@@ -93,6 +115,19 @@ def analyze_url(value: str) -> dict:
         "risk_score": score,
         "risk_level": "high" if score >= 55 else "medium" if score >= 20 else "low",
         "findings": findings,
+        "components": {
+            "scheme": parsed.scheme,
+            "host": host,
+            "subdomain": ".".join(subdomain_labels) if subdomain_labels else None,
+            "domain": root_label,
+            "suffix": suffix,
+            "tld": tld,
+            "path": parsed.path or "/",
+            "query": parsed.query or None,
+            "port": parsed.port,
+            "is_ip": is_ip,
+            "brand_match": matched_brand,
+        },
         "summary": f"Found {len(findings)} URL indicator(s). A low score does not prove that the destination is safe.",
         "recommendations": [
             "Check the registered domain carefully before signing in.",

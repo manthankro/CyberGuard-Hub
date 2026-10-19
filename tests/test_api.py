@@ -26,3 +26,13 @@ def test_module_catalog_and_triage():
     result=client.post("/api/analyze/triage",json={"content":"URGENT: send OTP at http://example.com"})
     assert result.status_code == 200
     assert result.json()["url_analyses"]
+
+def test_rules_catalog():
+    rules_resp = client.get("/api/rules")
+    assert rules_resp.status_code == 200
+    rules = rules_resp.json()["rules"]
+    assert len(rules) >= 15
+    assert any(r["module"] == "text" for r in rules)
+    assert any(r["module"] == "code" for r in rules)
+    assert any(r["module"] == "url" for r in rules)
+

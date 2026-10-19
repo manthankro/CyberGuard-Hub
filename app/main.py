@@ -34,6 +34,35 @@ async def security_headers(request, call_next):
 def home(): return FileResponse(STATIC/"index.html")
 @app.get("/health")
 def health(): return {"status":"ok","providers":provider_status(),"version":app.version}
+from app.analyzers.text import PATTERNS as TEXT_PATTERNS
+from app.analyzers.code import RULES as CODE_RULES
+
+@app.get("/api/rules")
+def get_rules():
+    rules = []
+    for r_id, label, _, sev, why, rec in TEXT_PATTERNS:
+        rules.append({"module": "text", "rule_id": r_id, "category": label, "severity": sev, "why_it_matters": why, "recommendation": rec})
+    for r_id, title, _, sev, fix, why, sample in CODE_RULES:
+        rules.append({"module": "code", "rule_id": r_id, "category": title, "severity": sev, "why_it_matters": why, "recommendation": fix, "sample_fix": sample})
+    url_rules = [
+        {"module": "url", "rule_id": "URL-IP", "category": "Raw IP address", "severity": "high", "why_it_matters": "A numeric destination can obscure the organisation behind a link.", "recommendation": "Do not sign in; verify destination officially."},
+        {"module": "url", "rule_id": "URL-USERINFO", "category": "User-info syntax (@ symbol)", "severity": "high", "why_it_matters": "Text before @ can disguise the actual destination.", "recommendation": "Inspect actual host after @ symbol."},
+        {"module": "url", "rule_id": "URL-PUNYCODE", "category": "Internationalized / Punycode (xn--)", "severity": "medium", "why_it_matters": "Visually deceptive homograph domain characters.", "recommendation": "Navigate from trusted bookmarks."},
+        {"module": "url", "rule_id": "URL-SHORTENER", "category": "URL Shortener", "severity": "medium", "why_it_matters": "Hides true landing destination from preview.", "recommendation": "Expand short URL before opening."},
+        {"module": "url", "rule_id": "URL-BRAND-SUBDOMAIN", "category": "Brand name in subdomain", "severity": "high", "why_it_matters": "Misleading subdomains mimicking major institutions.", "recommendation": "Verify registrable root domain."},
+        {"module": "url", "rule_id": "URL-TYPOLOOKALIKE", "category": "Typo-squatting lookalike domain", "severity": "high", "why_it_matters": "Subtle character substitutions (e.g. paypa1).", "recommendation": "Inspect spelling of domain name."},
+        {"module": "url", "rule_id": "URL-SUSPICIOUS-TLD", "category": "High-risk TLD", "severity": "medium", "why_it_matters": "TLDs disproportionately abused for transient spam.", "recommendation": "Exercise elevated caution with unfamiliar TLDs."},
+        {"module": "url", "rule_id": "URL-DECEPTIVE-PATH", "category": "Deceptive authentication path", "severity": "medium", "why_it_matters": "Appendage of 'login'/'kyc' to unrelated hostnames.", "recommendation": "Check if primary domain matches service."},
+    ]
+    rules.extend(url_rules)
+    media_rules = [
+        {"module": "media", "rule_id": "MEDIA-MIME-MISMATCH", "category": "Declared MIME vs File Signature Mismatch", "severity": "low", "why_it_matters": "Header claims one type while binary magic bytes indicate another.", "recommendation": "Examine file structure in safe sandbox."},
+        {"module": "media", "rule_id": "MEDIA-EXTENSION-MISMATCH", "category": "Extension vs Image Format Mismatch", "severity": "low", "why_it_matters": "Renamed extension can mask true executable or format.", "recommendation": "Verify true file format."},
+        {"module": "media", "rule_id": "MEDIA-SOFTWARE-EDITED", "category": "Post-Processing/Editor Metadata Signature", "severity": "medium", "why_it_matters": "EXIF indicates editing or AI synthesis software was applied.", "recommendation": "Cross-reference with original source."},
+    ]
+    rules.extend(media_rules)
+    return {"rules": rules, "total": len(rules)}
+
 @app.get("/api/modules")
 def modules():
     return {"modules":[

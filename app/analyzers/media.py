@@ -40,7 +40,23 @@ def inspect_media(data: bytes, filename: str, content_type: str) -> dict:
                 exif = image.getexif()
                 from PIL.ExifTags import TAGS
                 metadata = sorted({str(TAGS.get(key, key))[:80] for key in exif.keys()})[:30]
-                result.update({"format": image_format, "dimensions": {"width": image.width, "height": image.height}, "metadata_fields": metadata})
+                exif_details = {}
+                for key, val in exif.items():
+                    tag_name = str(TAGS.get(key, key))
+                    if isinstance(val, (str, int, float, bool)):
+                        exif_details[tag_name] = str(val)[:120]
+                    elif isinstance(val, bytes):
+                        try:
+                            exif_details[tag_name] = val.decode("utf-8", errors="ignore")[:120]
+                        except Exception:
+                            pass
+
+                result.update({
+                    "format": image_format,
+                    "dimensions": {"width": image.width, "height": image.height},
+                    "metadata_fields": metadata,
+                    "exif_details": exif_details,
+                })
                 actual_mime = IMAGE_MIMES.get(image_format)
                 if actual_mime and content_type != actual_mime:
                     result["signals"].append({"rule_id": "MEDIA-MIME-MISMATCH", "category": "Declared media type differs from image signature", "evidence": f"Declared {content_type}; detected {actual_mime}", "why_it_matters": "A filename or HTTP content type can disagree with the file's actual format.", "severity": "low"})
@@ -50,6 +66,9 @@ def inspect_media(data: bytes, filename: str, content_type: str) -> dict:
                     result["signals"].append({"rule_id": "MEDIA-NO-EXIF", "category": "No EXIF metadata found", "evidence": "No EXIF fields present", "why_it_matters": "Metadata is commonly stripped during normal sharing, so absence is inconclusive.", "severity": "low"})
                 else:
                     result["signals"].append({"rule_id": "MEDIA-EXIF", "category": "Image metadata present", "evidence": ", ".join(metadata) or f"{len(exif)} EXIF fields", "why_it_matters": "Metadata can provide context but is editable and does not verify when or how an image was created.", "severity": "low"})
+                    software_tag = str(exif_details.get("Software", "") or exif_details.get("ProcessingSoftware", ""))
+                    if any(sw in software_tag.lower() for sw in ["photoshop", "gimp", "canva", "midjourney", "stable diffusion", "dall-e", "picsart", "facetune", "lightroom"]):
+                        result["signals"].append({"rule_id": "MEDIA-SOFTWARE-EDITED", "category": "Post-processing software indicated in metadata", "evidence": f"Software signature: {software_tag}", "why_it_matters": "The file's metadata explicitly references editing or generation software.", "severity": "medium"})
                 if image.width * image.height > 40_000_000:
                     result["signals"].append({"rule_id": "MEDIA-LARGE-IMAGE", "category": "Large image dimensions", "evidence": f"{image.width} × {image.height}", "why_it_matters": "Very large images may require extra care when processing or sharing.", "severity": "low"})
         except (UnidentifiedImageError, OSError, Image.DecompressionBombError, Image.DecompressionBombWarning):

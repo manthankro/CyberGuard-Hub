@@ -1,78 +1,815 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#08111d"><meta name="description" content="A unified digital safety workspace for suspicious messages, links, media, and code.">
-<title>CyberGuard Hub — Digital Safety Workspace</title><link rel="stylesheet" href="/static/style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#070b12">
+  <meta name="description" content="CyberGuard Hub — Enterprise-grade digital safety workspace. Deep inspection for suspicious messages, links, media, and code with transparent evidence and mitigation guidance.">
+  <title>CyberGuard Hub — Advanced Digital Safety Workspace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-<div class="app-shell">
-  <aside class="sidebar">
-    <a class="brand" href="#dashboard" aria-label="CyberGuard Hub home"><span class="brand-mark">◈</span><span class="brand-name">CyberGuard<span>HUB</span></span></a>
-    <div class="workspace-tag">PERSONAL WORKSPACE</div>
-    <nav class="main-nav" aria-label="Main navigation">
-      <button class="nav-item active" data-page="dashboard"><span class="nav-icon">⌂</span><span>Overview</span></button>
-      <div class="nav-section">INVESTIGATE</div>
-      <button class="nav-item" data-page="triage"><span class="nav-icon">✳</span><span>Smart triage</span><span class="nav-badge">NEW</span></button>
-      <button class="nav-item" data-page="text"><span class="nav-icon">▤</span><span>Scam message</span></button>
-      <button class="nav-item" data-page="url"><span class="nav-icon">↗</span><span>Link scanner</span></button>
-      <button class="nav-item" data-page="code"><span class="nav-icon">⌘</span><span>Code audit</span></button>
-      <button class="nav-item" data-page="media"><span class="nav-icon">◉</span><span>Media verification</span></button>
-      <div class="nav-section history-nav-label">WORKSPACE</div>
-      <button class="nav-item" data-page="history"><span class="nav-icon">◷</span><span>Scan history</span><span id="history-count" class="count-badge">0</span></button>
-    </nav>
-    <div class="sidebar-spacer"></div>
-    <div class="side-status"><span class="status-dot"></span><span><b id="service-status">Connecting…</b><small id="model-status">Checking analysis services</small></span></div>
-    <div class="sidebar-footer"><span>CYBERGUARD HUB</span><span class="version-pill">BETA</span></div>
+<div class="app-layout">
+  <!-- Backdrop overlay for mobile sidebar -->
+  <div id="sidebar-overlay" class="sidebar-overlay" aria-hidden="true"></div>
+
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar" id="app-sidebar">
+    <div class="sidebar-header">
+      <a class="brand" href="#dashboard" aria-label="CyberGuard Hub Home">
+        <div class="brand-shield">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">CyberGuard<span class="brand-badge">HUB</span></span>
+          <span class="brand-sub">DEFENSE WORKSPACE</span>
+        </div>
+      </a>
+      <button class="mobile-close-btn" id="mobile-sidebar-close" aria-label="Close Sidebar">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+
+    <div class="nav-cluster">
+      <div class="nav-section-title">CORE PLATFORM</div>
+      <nav class="nav-menu" aria-label="Core Navigation">
+        <button class="nav-link active" data-page="dashboard">
+          <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          <span>Overview</span>
+        </button>
+      </nav>
+
+      <div class="nav-section-title">DETECTION & TRIAGE</div>
+      <nav class="nav-menu" aria-label="Investigation Modules">
+        <button class="nav-link" data-page="triage">
+          <svg class="nav-icon icon-triage" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          <span>Smart Triage</span>
+          <span class="pill-badge pill-new">CORRELATE</span>
+        </button>
+        <button class="nav-link" data-page="text">
+          <svg class="nav-icon icon-text" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path><line x1="8" y1="9" x2="16" y2="9"></line><line x1="8" y1="13" x2="14" y2="13"></line></svg>
+          <span>Scam Message</span>
+          <span class="pill-badge pill-sub">HIN / GUJ</span>
+        </button>
+        <button class="nav-link" data-page="url">
+          <svg class="nav-icon icon-url" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+          <span>Phishing Link</span>
+        </button>
+        <button class="nav-link" data-page="code">
+          <svg class="nav-icon icon-code" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+          <span>Code Auditor</span>
+        </button>
+        <button class="nav-link" data-page="media">
+          <svg class="nav-icon icon-media" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+          <span>Media & EXIF</span>
+        </button>
+      </nav>
+
+      <div class="nav-section-title">INTELLIGENCE & WORKSPACE</div>
+      <nav class="nav-menu" aria-label="Knowledge and Logs">
+        <button class="nav-link" data-page="playbooks">
+          <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+          <span>Playbooks</span>
+        </button>
+        <button class="nav-link" data-page="rules">
+          <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+          <span>Rules Catalog</span>
+          <span class="count-badge" id="rules-nav-count">19</span>
+        </button>
+        <button class="nav-link" data-page="history">
+          <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          <span>Audit History</span>
+          <span class="count-badge" id="history-count">0</span>
+        </button>
+      </nav>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="system-status-card">
+        <div class="status-indicator-row">
+          <span class="pulse-beacon" id="system-beacon"></span>
+          <span class="status-text" id="service-status">Engine Online</span>
+        </div>
+        <div class="status-sub" id="model-status">Local Heuristics · Zero Leakage</div>
+      </div>
+      <div class="footer-meta">
+        <span>CYBERGUARD HUB v1.2</span>
+        <button class="btn-text-sub" id="sidebar-privacy-btn">Privacy Terms</button>
+      </div>
+    </div>
   </aside>
 
-  <main class="main-area">
-    <header class="topbar"><div class="breadcrumbs"><span>Workspace</span><i>/</i><b id="breadcrumb-current">Overview</b></div><div class="topbar-right"><span class="track-label"><span></span>NAVRATRI CODEATHON · DIGITAL SAFETY</span><button class="icon-button" id="privacy-info" aria-label="Privacy information" title="Privacy information">ⓘ</button><button class="avatar" title="CyberGuard workspace">CG</button></div></header>
-
-    <section id="page-dashboard" class="page active-page">
-      <div class="welcome-row"><div><div class="overline"><span class="pulse-dot"></span> YOUR DIGITAL SAFETY DESK</div><h1>Pause. Check.<br><em>Stay protected.</em></h1><p class="lead">One workspace to investigate suspicious messages, links, media, and code—with clear evidence and practical next steps.</p></div><div class="welcome-art"><div class="art-ring ring-one"></div><div class="art-ring ring-two"></div><div class="shield">◈</div><span class="art-spark spark-a">✦</span><span class="art-spark spark-b">·</span><span class="art-spark spark-c">+</span></div></div>
-      <div class="dashboard-grid">
-        <section class="feature-card"><div class="feature-copy"><div class="feature-eyebrow"><span class="feature-star">✳</span> START WITH A MESSAGE</div><h2>Something feels off?</h2><p>Check the message and its links together. Smart triage connects language cues to suspicious destinations in one report.</p><button class="button button-primary" data-go="triage">Run smart triage <span>→</span></button></div><div class="feature-visual"><div class="message-float"><span class="msg-avatar">!</span><span><b>Account alert</b><small>Urgent · Verify now…</small></span><span class="tiny-alert">!</span></div><div class="connector">··········</div><div class="risk-float"><span>◈</span><b>2 signals<br><small>linked together</small></b></div></div></section>
-        <section class="stats-row"><article class="stat-card"><div class="stat-label">ANALYSES ON THIS DEVICE</div><div class="stat-value" id="stat-scans">0</div><div class="stat-foot">Saved only in this browser</div></article><article class="stat-card"><div class="stat-label">HIGH SIGNAL REPORTS</div><div class="stat-value" id="stat-high">0</div><div class="stat-foot">Review your recent findings</div></article><article class="stat-card"><div class="stat-label">TOOLS IN YOUR WORKSPACE</div><div class="stat-value">05</div><div class="stat-foot">Four analyzers + smart triage</div></article></section>
+  <!-- Main Content Viewport -->
+  <div class="main-viewport">
+    <!-- Top Navigation Bar -->
+    <header class="top-nav">
+      <div class="top-nav-left">
+        <button class="mobile-menu-btn" id="mobile-menu-toggle" aria-label="Toggle Navigation Menu">
+          <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+        <div class="breadcrumb-trail">
+          <span class="breadcrumb-root">Workspace</span>
+          <span class="breadcrumb-sep">/</span>
+          <span class="breadcrumb-current" id="breadcrumb-current">Overview</span>
+        </div>
       </div>
-      <div class="section-heading"><div><div class="overline">YOUR TOOLKIT</div><h2>Investigate with clarity</h2></div><span class="section-note">Each tool shows its evidence and limits.</span></div>
-      <div class="tool-grid">
-        <button class="tool-card" data-go="text"><span class="tool-icon icon-coral">▤</span><span class="tool-card-copy"><b>Scam message</b><small>Find pressure, OTP, payment, and impersonation cues.</small></span><span class="card-arrow">↗</span></button>
-        <button class="tool-card" data-go="url"><span class="tool-icon icon-blue">↗</span><span class="tool-card-copy"><b>Link scanner</b><small>Inspect suspicious URL patterns without opening the link.</small></span><span class="card-arrow">↗</span></button>
-        <button class="tool-card" data-go="code"><span class="tool-icon icon-amber">⌘</span><span class="tool-card-copy"><b>Code audit</b><small>Spot selected code risks with line references and fixes.</small></span><span class="card-arrow">↗</span></button>
-        <button class="tool-card" data-go="media"><span class="tool-icon icon-violet">◉</span><span class="tool-card-copy"><b>Media verification</b><small>Inspect file signatures and metadata; optional visual clues are not a deepfake verdict.</small></span><span class="card-arrow">↗</span></button>
+
+      <div class="top-nav-right">
+        <div class="track-badge">
+          <span class="track-dot"></span>
+          <span>NAVRATRI CODEATHON · CYBERSECURITY TRACK</span>
+        </div>
+        <button class="top-icon-btn" id="quick-playbooks-btn" title="Emergency Playbooks" aria-label="Emergency Playbooks">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </button>
+        <button class="top-icon-btn" id="privacy-info-btn" title="Zero-Storage Privacy Architecture" aria-label="Privacy Information">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+        </button>
+        <div class="user-pill" title="Local Private Session">
+          <span class="user-avatar">CG</span>
+          <span class="user-label">SEC-DESK</span>
+        </div>
       </div>
-      <div class="section-heading recent-heading"><div><div class="overline">ON THIS DEVICE</div><h2>Recent investigations</h2></div><button class="text-button" data-go="history">View history <span>→</span></button></div>
-      <div id="dashboard-recent" class="recent-list"></div>
-      <div class="trust-strip"><span class="trust-icon">⌑</span><span><b>Privacy by design</b><small>Submitted content is analyzed for your request. Only a short report is saved in this browser; the original text or code is not stored.</small></span><button id="privacy-details" class="text-button">How it works</button></div>
-    </section>
+    </header>
 
-    <section id="page-investigate" class="page">
-      <div class="page-intro"><div class="overline"><span class="pulse-dot"></span><span id="tool-overline">MESSAGE TRIAGE</span></div><h1 id="tool-title">A clearer picture,<br><em>in one scan.</em></h1><p id="tool-description">Paste a suspicious message. CyberGuard checks its language and any embedded links together.</p></div>
-      <div class="tool-tabs" role="tablist"><button data-tool="triage" class="tool-tab active">✳ <span>Smart triage</span></button><button data-tool="text" class="tool-tab">▤ <span>Scam text</span></button><button data-tool="url" class="tool-tab">↗ <span>URL scanner</span></button><button data-tool="code" class="tool-tab">⌘ <span>Code auditor</span></button><button data-tool="media" class="tool-tab">◉ <span>Media verification</span></button></div>
-      <div class="investigation-layout">
-        <section class="work-card input-card"><div class="card-heading"><div><div class="overline" id="input-kicker">INVESTIGATION INPUT</div><h2 id="input-heading">Check a message and its links</h2></div><span class="step-chip">01 <i>/</i> INPUT</span></div>
-          <div id="form-triage" class="form-view"><label for="triage-input">MESSAGE, SMS, EMAIL, OR CHAT</label><textarea id="triage-input" class="large-input" placeholder="Paste the suspicious message here…"></textarea><div class="inline-help"><button class="sample-button" id="sample-triage">↳ Load demo example</button><span>Embedded links are inspected as text; they are never opened.</span></div></div>
-          <div id="form-text" class="form-view hidden"><label for="text-input">MESSAGE CONTENT</label><textarea id="text-input" class="large-input" placeholder="Paste an SMS, chat, or email…"></textarea><div class="inline-help"><button class="sample-button" id="sample-text">↳ Load demo example</button><span>Includes selected English, Hindi, and Gujarati patterns.</span></div></div>
-          <div id="form-url" class="form-view hidden"><label for="url-input">SUSPICIOUS URL</label><input id="url-input" class="single-input" placeholder="https://example.com/login"><div class="inline-help"><button class="sample-button" id="sample-url">↳ Load demo example</button><span>This tool checks URL text and makes no network request.</span></div></div>
-          <div id="form-media" class="form-view hidden"><label>IMAGE, AUDIO, OR VIDEO FILE</label><label class="drop-zone" for="media-input"><span class="upload-mark">↑</span><b id="file-label">Choose a file to inspect</b><small>Images, audio, or video · 10 MB maximum</small><input id="media-input" type="file" accept="image/*,audio/*,video/*"></label><label class="consent-row"><input id="media-ai-consent" type="checkbox"><span><b>Optional Gemini image observations</b><small>Send this image to Gemini for visual clues. Off by default. Not a deepfake or authenticity verdict.</small></span></label><div class="caution-note"><span>i</span><span>Local checks inspect file signatures, image dimensions, and metadata. Audio/video authenticity is not analyzed.</span></div></div>
-          <div id="form-code" class="form-view hidden"><label for="code-input">SOURCE CODE OR SMART CONTRACT</label><textarea id="code-input" class="large-input code-input" placeholder="Paste a code sample to inspect…"></textarea><div class="inline-help"><button class="sample-button" id="sample-code">↳ Load demo example</button><span>Selected pattern checks, not a full compiler or security audit.</span></div></div>
-          <button class="button button-primary run-button" id="analyze-button"><span id="analyze-label">Analyze message</span><span>→</span></button><div class="privacy-line"><span>⌑</span> Input is not stored in the browser history.</div>
-        </section>
-        <section class="work-card report-card"><div class="card-heading"><div><div class="overline">EVIDENCE-LED REPORT</div><h2>Findings & next steps</h2></div><span id="report-state" class="report-state"><i></i> READY</span></div><div id="report-placeholder" class="report-placeholder"><div class="report-orbit"><span>◈</span><i></i></div><b>Your report will appear here</b><p>Run an analysis to see the signals, plain-language context, and suggested actions.</p><div class="placeholder-rule"></div><small>LOWER SCORES DO NOT PROVE AN ITEM IS SAFE</small></div><div id="report-output" class="report-output hidden"></div><div id="report-actions" class="report-actions hidden"><button id="copy-report" class="button button-secondary">▣ Copy summary</button><button id="download-report" class="button button-secondary">↓ Export JSON</button><button id="print-report" class="button button-quiet">Print / PDF</button></div></section>
+    <!-- Page Content Container -->
+    <main class="page-container" id="main-content">
+
+      <!-- ================= PAGE 1: DASHBOARD ================= -->
+      <section id="page-dashboard" class="page-view active-page">
+        <!-- Hero Banner -->
+        <div class="hero-card">
+          <div class="hero-content">
+            <div class="hero-eyebrow">
+              <span class="hero-live-dot"></span>
+              <span>UNIFIED CYBER THREAT TRIAGE & ANALYSIS PLATFORM</span>
+            </div>
+            <h1 class="hero-headline">Pause. Inspect.<br><span class="hero-gradient">Neutralize Digital Threats.</span></h1>
+            <p class="hero-description">
+              Verify suspicious emails, texts, URLs, binary media, and source code in a private, client-first workspace. Get transparent signal scores, observable evidence, and instant defensive steps.
+            </p>
+            <div class="hero-actions">
+              <button class="btn btn-primary btn-lg" data-go="triage">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                <span>Launch Smart Triage</span>
+              </button>
+              <button class="btn btn-secondary btn-lg" data-go="playbooks">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <span>Emergency Playbooks</span>
+              </button>
+            </div>
+          </div>
+          <div class="hero-visual">
+            <div class="shield-orb">
+              <div class="orb-ring ring-outer"></div>
+              <div class="orb-ring ring-middle"></div>
+              <div class="orb-core">
+                <svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  <polyline points="9 12 11 14 15 10"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metrics Grid -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-top">
+              <span class="stat-title">SCANS EXECUTED</span>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+            </div>
+            <div class="stat-number" id="stat-scans">0</div>
+            <div class="stat-footer">Stored locally in your browser</div>
+          </div>
+
+          <div class="stat-card stat-alert">
+            <div class="stat-top">
+              <span class="stat-title">HIGH THREAT SIGNALS</span>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            </div>
+            <div class="stat-number" id="stat-high">0</div>
+            <div class="stat-footer">Requiring immediate attention</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-top">
+              <span class="stat-title">DETECTION RULES ACTIVE</span>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+            </div>
+            <div class="stat-number" id="stat-rules-count">20+</div>
+            <div class="stat-footer">Across 4 specialized engines</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-top">
+              <span class="stat-title">DATA PRIVACY STATUS</span>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            </div>
+            <div class="stat-number text-mint">100%</div>
+            <div class="stat-footer">Zero server persistence</div>
+          </div>
+        </div>
+
+        <!-- Investigation Toolkit Grid -->
+        <div class="section-header">
+          <div>
+            <div class="section-tag">INVESTIGATION MODULES</div>
+            <h2 class="section-title">Specialized Defense Analyzers</h2>
+          </div>
+          <span class="section-hint">Choose a module to analyze suspicious artifacts with explainable heuristics</span>
+        </div>
+
+        <div class="tools-grid">
+          <div class="tool-card" data-go="triage">
+            <div class="tool-card-icon icon-triage">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            </div>
+            <div class="tool-card-body">
+              <div class="tool-header-row">
+                <h3 class="tool-name">Smart Triage</h3>
+                <span class="badge-featured">RECOMMENDED</span>
+              </div>
+              <p class="tool-desc">Correlate language indicators and embedded links simultaneously in one holistic investigation.</p>
+              <div class="tool-tags">
+                <span class="tag-pill">SMS/Chat</span>
+                <span class="tag-pill">Links</span>
+                <span class="tag-pill">Combined Score</span>
+              </div>
+            </div>
+            <div class="tool-card-arrow">→</div>
+          </div>
+
+          <div class="tool-card" data-go="text">
+            <div class="tool-card-icon icon-text">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path><line x1="8" y1="9" x2="16" y2="9"></line><line x1="8" y1="13" x2="14" y2="13"></line></svg>
+            </div>
+            <div class="tool-card-body">
+              <div class="tool-header-row">
+                <h3 class="tool-name">Scam Message Analyzer</h3>
+                <span class="tag-pill">EN · HI · GUJ</span>
+              </div>
+              <p class="tool-desc">Detect urgency tactics, OTP/credential fishing, payment hooks, and authority impersonation.</p>
+              <div class="tool-tags">
+                <span class="tag-pill">Multilingual</span>
+                <span class="tag-pill">Social Engineering</span>
+              </div>
+            </div>
+            <div class="tool-card-arrow">→</div>
+          </div>
+
+          <div class="tool-card" data-go="url">
+            <div class="tool-card-icon icon-url">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+            </div>
+            <div class="tool-card-body">
+              <div class="tool-header-row">
+                <h3 class="tool-name">Phishing Link Scanner</h3>
+                <span class="tag-pill">SAFE PARSER</span>
+              </div>
+              <p class="tool-desc">Inspect punycode, lookalike domains, raw IPs, deceptive subdomains, and suspicious TLDs safely.</p>
+              <div class="tool-tags">
+                <span class="tag-pill">Never Fetches URL</span>
+                <span class="tag-pill">Component Tree</span>
+              </div>
+            </div>
+            <div class="tool-card-arrow">→</div>
+          </div>
+
+          <div class="tool-card" data-go="code">
+            <div class="tool-card-icon icon-code">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+            </div>
+            <div class="tool-card-body">
+              <div class="tool-header-row">
+                <h3 class="tool-name">Code Auditor</h3>
+                <span class="tag-pill">MULTI-LANG</span>
+              </div>
+              <p class="tool-desc">Catch SQLi, shell command injection, leaked credentials, deserialization, and Solidity reentrancy.</p>
+              <div class="tool-tags">
+                <span class="tag-pill">Line Highlights</span>
+                <span class="tag-pill">Remediation Snippets</span>
+              </div>
+            </div>
+            <div class="tool-card-arrow">→</div>
+          </div>
+
+          <div class="tool-card" data-go="media">
+            <div class="tool-card-icon icon-media">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            </div>
+            <div class="tool-card-body">
+              <div class="tool-header-row">
+                <h3 class="tool-name">Media & EXIF Verification</h3>
+                <span class="tag-pill">FORENSIC</span>
+              </div>
+              <p class="tool-desc">Inspect magic-byte MIME mismatches, metadata tampering, EXIF properties, and SHA-256 signatures.</p>
+              <div class="tool-tags">
+                <span class="tag-pill">EXIF Table</span>
+                <span class="tag-pill">Software Signature</span>
+              </div>
+            </div>
+            <div class="tool-card-arrow">→</div>
+          </div>
+
+          <div class="tool-card" data-go="playbooks">
+            <div class="tool-card-icon icon-playbooks">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+            </div>
+            <div class="tool-card-body">
+              <div class="tool-header-row">
+                <h3 class="tool-name">Security Playbooks</h3>
+                <span class="badge-featured">ACTIONABLE</span>
+              </div>
+              <p class="tool-desc">Step-by-step incident containment guides: clicked a link, leaked credentials, or compromised bank details.</p>
+              <div class="tool-tags">
+                <span class="tag-pill">Helpline 1930</span>
+                <span class="tag-pill">Response SOPs</span>
+              </div>
+            </div>
+            <div class="tool-card-arrow">→</div>
+          </div>
+        </div>
+
+        <!-- Recent Investigations Section -->
+        <div class="section-header mt-8">
+          <div>
+            <div class="section-tag">AUDIT LOG</div>
+            <h2 class="section-title">Recent Device Investigations</h2>
+          </div>
+          <button class="btn btn-secondary btn-sm" data-go="history">
+            <span>View Full History</span>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+        </div>
+        <div id="dashboard-recent" class="recent-container"></div>
+
+        <!-- Privacy Architecture Guarantee Card -->
+        <div class="privacy-guarantee-banner">
+          <div class="guarantee-icon">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div class="guarantee-body">
+            <h4>Private by Architecture · Client-Bound Analysis</h4>
+            <p>Your inputs, messages, and uploaded files are analyzed in-flight and are never written to disk or stored on external servers. Scan history is retained strictly within this browser's local sandbox.</p>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="dashboard-privacy-learn">How It Works</button>
+        </div>
+      </section>
+
+      <!-- ================= PAGE 2: INVESTIGATION WORKSPACE ================= -->
+      <section id="page-investigate" class="page-view">
+        <!-- Module Header -->
+        <div class="investigation-intro">
+          <div class="intro-badge" id="tool-overline">MESSAGE TRIAGE</div>
+          <h1 class="intro-title" id="tool-title">Correlate Signals,<br><em>Understand the Full Picture.</em></h1>
+          <p class="intro-desc" id="tool-description">Inspect messages and embedded hyperlinks in tandem to detect synchronized social-engineering hooks.</p>
+        </div>
+
+        <!-- Module Selector Tabs -->
+        <div class="module-tab-bar" role="tablist">
+          <button data-tool="triage" class="module-tab active">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            <span>Smart Triage</span>
+          </button>
+          <button data-tool="text" class="module-tab">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            <span>Scam Message</span>
+          </button>
+          <button data-tool="url" class="module-tab">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line></svg>
+            <span>Link Scanner</span>
+          </button>
+          <button data-tool="code" class="module-tab">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+            <span>Code Auditor</span>
+          </button>
+          <button data-tool="media" class="module-tab">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle></svg>
+            <span>Media Verification</span>
+          </button>
+        </div>
+
+        <!-- Investigation Two-Column Workspace -->
+        <div class="workspace-grid">
+          <!-- LEFT COLUMN: Input Form -->
+          <div class="panel-card input-panel">
+            <div class="panel-header">
+              <div>
+                <span class="panel-step">STEP 01</span>
+                <h2 class="panel-title" id="input-heading">Input Investigation Data</h2>
+              </div>
+              <div class="sample-preset-wrapper">
+                <button class="btn btn-preset" id="sample-trigger-btn">
+                  <span>↳ Load Preset Sample</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="input-form-container">
+              <!-- Form: Smart Triage -->
+              <div id="form-triage" class="form-module">
+                <label for="triage-input" class="input-label">SUSPICIOUS MESSAGE (SMS, EMAIL, OR CHAT WITH EMBEDDED LINKS)</label>
+                <textarea id="triage-input" class="code-textarea" placeholder="Paste the full suspicious message, SMS, WhatsApp chat, or email content here..."></textarea>
+                <div class="input-meta-bar">
+                  <span class="input-note">Embedded URLs will be safely parsed as text; they are never fetched.</span>
+                  <span class="char-counter" id="triage-counter">0 chars</span>
+                </div>
+              </div>
+
+              <!-- Form: Scam Message -->
+              <div id="form-text" class="form-module hidden">
+                <label for="text-input" class="input-label">MESSAGE TEXT (ENGLISH, HINDI, OR GUJARATI)</label>
+                <textarea id="text-input" class="code-textarea" placeholder="Paste the message text here to scan for urgency, impersonation, or financial hooks..."></textarea>
+                <div class="input-meta-bar">
+                  <span class="input-note">Supports Devanagari Hindi, Gujarati, and English social-engineering patterns.</span>
+                  <span class="char-counter" id="text-counter">0 chars</span>
+                </div>
+              </div>
+
+              <!-- Form: Link Scanner -->
+              <div id="form-url" class="form-module hidden">
+                <label for="url-input" class="input-label">DESTINATION URL TO AUDIT</label>
+                <div class="single-input-wrap">
+                  <span class="input-addon">https://</span>
+                  <input id="url-input" class="text-input" placeholder="example-verify-login.account-check.xyz/auth">
+                </div>
+                <div class="input-meta-bar">
+                  <span class="input-note">Inspects domain structure, punycode, lookalikes, and query syntax offline.</span>
+                </div>
+              </div>
+
+              <!-- Form: Code Auditor -->
+              <div id="form-code" class="form-module hidden">
+                <label for="code-input" class="input-label">SOURCE CODE / SMART CONTRACT (PYTHON, JS, SOLIDITY, BASH)</label>
+                <textarea id="code-input" class="code-textarea code-font" placeholder="Paste source code snippet here to check for common vulnerability patterns..."></textarea>
+                <div class="input-meta-bar">
+                  <span class="input-note">Identifies SQLi, shell injection, exposed keys (redacted), and reentrancy.</span>
+                  <span class="char-counter" id="code-counter">0 chars</span>
+                </div>
+              </div>
+
+              <!-- Form: Media Verification -->
+              <div id="form-media" class="form-module hidden">
+                <label class="input-label">BINARY MEDIA FILE (IMAGE, AUDIO, OR VIDEO)</label>
+                <div class="drop-zone" id="media-drop-zone">
+                  <div class="drop-zone-icon">
+                    <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                  </div>
+                  <div class="drop-zone-text">
+                    <b id="file-label">Click or Drag & Drop File</b>
+                    <small>Supports PNG, JPEG, WEBP, GIF, MP4, WAV, MP3 · Max 10 MB</small>
+                  </div>
+                  <input id="media-input" type="file" accept="image/*,audio/*,video/*" class="file-input-hidden">
+                </div>
+
+                <!-- Media Preview Card (populated on file selection) -->
+                <div id="media-preview-container" class="media-preview-card hidden">
+                  <div class="preview-media-box" id="preview-media-box"></div>
+                  <div class="preview-meta">
+                    <b id="preview-filename">file.png</b>
+                    <span id="preview-filesize">0 KB</span>
+                    <button class="btn-text-danger" id="clear-media-btn">Remove</button>
+                  </div>
+                </div>
+
+                <!-- Opt-in Visual Clues Consent -->
+                <label class="consent-checkbox-card" for="media-ai-consent">
+                  <input id="media-ai-consent" type="checkbox">
+                  <div class="consent-copy">
+                    <b>Optional Gemini Visual Analysis</b>
+                    <small>Sends the selected image to Google Gemini to describe visible artifacts. Off by default. Not a deepfake verification.</small>
+                  </div>
+                </label>
+
+                <div class="notice-box">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                  <span>Local checks parse magic-byte signatures and EXIF metadata without network calls.</span>
+                </div>
+              </div>
+
+              <!-- Action Trigger Button -->
+              <div class="form-action-row">
+                <button class="btn btn-primary btn-block" id="analyze-button">
+                  <span id="analyze-label">Run Smart Triage</span>
+                  <span class="btn-shortcut-hint">⌘ + Enter</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT COLUMN: Report & Findings Output -->
+          <div class="panel-card report-panel">
+            <div class="panel-header">
+              <div>
+                <span class="panel-step">STEP 02</span>
+                <h2 class="panel-title">Evidence-Led Report</h2>
+              </div>
+              <div id="report-state" class="report-state-pill state-ready">
+                <span class="state-dot"></span>
+                <span id="report-state-label">AWAITING INPUT</span>
+              </div>
+            </div>
+
+            <!-- Empty State / Placeholder -->
+            <div id="report-placeholder" class="report-empty-state">
+              <div class="empty-icon-orbit">
+                <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M12 16v-4"></path>
+                  <path d="M12 8h.01"></path>
+                </svg>
+              </div>
+              <h3 class="empty-title">Ready to Investigate</h3>
+              <p class="empty-desc">Enter a message, URL, code snippet, or media file on the left, then click analyze to generate an evidence-backed security dossier.</p>
+              <div class="empty-quick-hint">
+                <span>💡 TIP: Use "Load Preset Sample" to test real-world phishing and scam attack vectors.</span>
+              </div>
+            </div>
+
+            <!-- Dynamic Report Content -->
+            <div id="report-output" class="report-output-scroll hidden"></div>
+
+            <!-- Report Action Bar -->
+            <div id="report-actions" class="report-actions-bar hidden">
+              <button id="copy-report" class="btn btn-secondary btn-sm" title="Copy text summary to clipboard">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <span>Copy Summary</span>
+              </button>
+              <button id="download-report" class="btn btn-secondary btn-sm" title="Download raw JSON report">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                <span>Export JSON</span>
+              </button>
+              <button id="download-md-report" class="btn btn-secondary btn-sm" title="Download formatted Markdown dossier">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                <span>Export Markdown</span>
+              </button>
+              <button id="print-report" class="btn btn-secondary btn-sm" title="Print or save as PDF">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                <span>Print / PDF</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= PAGE 3: SECURITY PLAYBOOKS ================= -->
+      <section id="page-playbooks" class="page-view">
+        <div class="investigation-intro">
+          <div class="intro-badge">INCIDENT RESPONSE GUIDE</div>
+          <h1 class="intro-title">Actionable Security<br><em>Playbooks.</em></h1>
+          <p class="intro-desc">Step-by-step containment procedures if you suspect compromise, leaked credentials, or fraudulent transactions.</p>
+        </div>
+
+        <div class="playbooks-grid">
+          <!-- Playbook 1 -->
+          <div class="playbook-card">
+            <div class="playbook-header">
+              <div class="playbook-icon icon-danger">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+              </div>
+              <div>
+                <span class="playbook-tag tag-urgent">CRITICAL SCENARIO</span>
+                <h3 class="playbook-title">I Shared an OTP or Password</h3>
+              </div>
+            </div>
+            <ol class="playbook-steps">
+              <li><strong>Freeze immediate access:</strong> Call your bank's emergency debit/credit card blocking hotline or use your bank app to freeze netbanking immediately.</li>
+              <li><strong>Change primary passwords:</strong> Reset the password for that account and any other services sharing similar passwords using a different, clean device.</li>
+              <li><strong>Revoke active sessions:</strong> Go to the security settings of your account and click "Log out of all devices" or revoke active sessions.</li>
+              <li><strong>Report the incident:</strong> In India, dial <strong>1930</strong> (National Cyber Crime Reporting Helpline) or file a report at <strong>cybercrime.gov.in</strong> within the golden hour.</li>
+            </ol>
+          </div>
+
+          <!-- Playbook 2 -->
+          <div class="playbook-card">
+            <div class="playbook-header">
+              <div class="playbook-icon icon-warning">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line></svg>
+              </div>
+              <div>
+                <span class="playbook-tag tag-med">PREVENTATIVE</span>
+                <h3 class="playbook-title">I Clicked a Suspicious Link</h3>
+              </div>
+            </div>
+            <ol class="playbook-steps">
+              <li><strong>Do not enter any information:</strong> Close the browser tab immediately. Never input credentials, payment details, or phone numbers.</li>
+              <li><strong>Disconnect network if file downloaded:</strong> If an `.apk`, `.exe`, or profile configuration began downloading, turn off Wi-Fi/mobile data instantly.</li>
+              <li><strong>Clear browser cache & cookies:</strong> Clear site data and cookies for that specific domain to prevent credential replay tokens.</li>
+              <li><strong>Scan device with reputable AV:</strong> Run a full system antivirus scan (e.g. Play Protect on Android, Windows Defender, or Malwarebytes).</li>
+            </ol>
+          </div>
+
+          <!-- Playbook 3 -->
+          <div class="playbook-card">
+            <div class="playbook-header">
+              <div class="playbook-icon icon-info">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+              </div>
+              <div>
+                <span class="playbook-tag tag-code">DEVELOPER DEFENSE</span>
+                <h3 class="playbook-title">I Committed a Secret / API Key</h3>
+              </div>
+            </div>
+            <ol class="playbook-steps">
+              <li><strong>Invalidate immediately:</strong> Do not just push a commit deleting the key! Go to the provider console (AWS, Stripe, OpenAI, Gemini) and revoke the secret immediately.</li>
+              <li><strong>Audit recent API logs:</strong> Check cloud audit logs for unauthorized billing spikes or suspicious access during the exposure window.</li>
+              <li><strong>Clean git commit history:</strong> Use tools like `git-filter-repo` or BFG Repo-Cleaner to completely purge the secret from previous commit objects.</li>
+              <li><strong>Adopt environment secrets:</strong> Migrate to `.env` with `.gitignore` or a dedicated secrets manager like Google Secret Manager or HashiCorp Vault.</li>
+            </ol>
+          </div>
+
+          <!-- Emergency Helplines Card -->
+          <div class="playbook-card card-helplines">
+            <div class="playbook-header">
+              <div class="playbook-icon icon-helpline">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+              </div>
+              <div>
+                <span class="playbook-tag tag-official">OFFICIAL CHANNELS</span>
+                <h3 class="playbook-title">Emergency Cyber Reporting</h3>
+              </div>
+            </div>
+            <div class="helpline-table">
+              <div class="helpline-row">
+                <b>India National Cyber Crime Portal</b>
+                <a href="tel:1930" class="helpline-call">1930 (Toll-Free)</a>
+              </div>
+              <div class="helpline-row">
+                <b>National Portal Web Filing</b>
+                <a href="https://cybercrime.gov.in" target="_blank" rel="noopener">cybercrime.gov.in ↗</a>
+              </div>
+              <div class="helpline-row">
+                <b>US Internet Crime Complaint Center (IC3)</b>
+                <a href="https://www.ic3.gov" target="_blank" rel="noopener">ic3.gov ↗</a>
+              </div>
+              <div class="helpline-row">
+                <b>Report Phishing Link to Google</b>
+                <a href="https://safebrowsing.google.com/safebrowsing/report_phish/" target="_blank" rel="noopener">Google Safe Browsing ↗</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= PAGE 4: RULES CATALOG ================= -->
+      <section id="page-rules" class="page-view">
+        <div class="investigation-intro">
+          <div class="intro-badge">HEURISTIC TRANSPARENCY</div>
+          <h1 class="intro-title">Detection Rules<br><em>& Intelligence Catalog.</em></h1>
+          <p class="intro-desc">Every finding in CyberGuard is powered by explicit, auditable pattern rules rather than opaque black-box scoring.</p>
+        </div>
+
+        <div class="rules-toolbar">
+          <div class="search-input-wrap">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="rules-search" placeholder="Search rules by ID, keyword, or risk...">
+          </div>
+          <div class="filter-pills" id="rules-filter-pills">
+            <button class="filter-pill active" data-filter="all">All Modules</button>
+            <button class="filter-pill" data-filter="text">Scam Text</button>
+            <button class="filter-pill" data-filter="url">URL Heuristics</button>
+            <button class="filter-pill" data-filter="code">Code Security</button>
+            <button class="filter-pill" data-filter="media">Media & EXIF</button>
+          </div>
+        </div>
+
+        <div id="rules-grid" class="rules-catalog-grid">
+          <!-- Populated dynamically via JS from /api/rules -->
+        </div>
+      </section>
+
+      <!-- ================= PAGE 5: AUDIT HISTORY ================= -->
+      <section id="page-history" class="page-view">
+        <div class="investigation-intro">
+          <div class="intro-badge">LOCAL BROWSER REPOSITORY</div>
+          <h1 class="intro-title">Device Investigation<br><em>Audit History.</em></h1>
+          <p class="intro-desc">Short report summaries are stored strictly inside your browser's local sandbox. Original submitted payloads are never stored.</p>
+        </div>
+
+        <div class="history-controls-bar">
+          <div class="search-input-wrap flex-1">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="history-search" placeholder="Search saved investigations by module, summary, or findings...">
+          </div>
+          <div class="history-actions-group">
+            <select id="history-filter" class="select-input" aria-label="Filter by signal level">
+              <option value="all">All Signal Levels</option>
+              <option value="high">High Threat Signals</option>
+              <option value="medium">Medium Threat Signals</option>
+              <option value="low">Low Threat Signals</option>
+              <option value="inconclusive">Inconclusive</option>
+            </select>
+            <button id="clear-history" class="btn btn-danger btn-sm">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              <span>Clear History</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="history-list" class="history-cards-container"></div>
+      </section>
+
+    </main>
+
+    <!-- Global Application Footer -->
+    <footer class="app-footer">
+      <div class="footer-left">
+        <span class="footer-brand">◈ CyberGuard Hub</span>
+        <span class="footer-dot">·</span>
+        <span>Evidence-Led Digital Safety Defense Workspace</span>
       </div>
-      <div class="method-banner"><span class="method-icon">✦</span><span><b>Designed to show its work</b><small>Rules create the initial findings. Gemini, when configured, can explain those findings but cannot verify them. Scores are indicator scores—not probabilities.</small></span><a href="/docs" target="_blank" rel="noreferrer">API details ↗</a></div>
-    </section>
-
-    <section id="page-history" class="page">
-      <div class="page-intro history-intro"><div class="overline">PRIVATE TO THIS BROWSER</div><h1>Your investigation<br><em>history.</em></h1><p>Only short report summaries are stored here. Your original text, links, uploads, and code are not saved.</p></div>
-      <div class="history-toolbar"><div class="search-wrap"><span>⌕</span><input id="history-search" placeholder="Search reports or tool names…"></div><select id="history-filter" aria-label="Filter by risk"><option value="all">All risk levels</option><option value="high">High signals</option><option value="medium">Medium signals</option><option value="low">Low signals</option></select><button id="clear-history" class="button button-quiet">Clear history</button></div>
-      <div id="history-list" class="history-list"></div>
-    </section>
-
-    <footer class="app-footer"><span>CyberGuard Hub <i>·</i> Built for safer digital habits</span><span>Always verify important requests independently.</span></footer>
-  </main>
+      <div class="footer-right">
+        <span>Always verify high-stakes financial and credentials requests via independent, official channels.</span>
+      </div>
+    </footer>
+  </div>
 </div>
-<div id="toast" class="toast" role="status" aria-live="polite"></div>
-<div id="privacy-modal" class="modal-backdrop hidden"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="privacy-title"><button id="close-privacy" class="modal-close" aria-label="Close">×</button><div class="overline">YOUR DATA, YOUR DEVICE</div><h2 id="privacy-title">A simple privacy promise</h2><p>CyberGuard analyzes the item you submit to generate a report. It does not store the original message, link, file, or code in an app database.</p><p>For your history, this browser saves only a short report locally. Optional text and code explanations send sanitized finding labels—not source content—to the configured provider. If you turn on Gemini visual observations, the selected image is sent to Google Gemini; this option is off by default.</p><div class="caution-note"><span>i</span><span>Avoid submitting secrets, credentials, private files, or personal data. This is a hackathon prototype, not a secure incident-response service.</span></div><button id="privacy-ok" class="button button-primary">Got it</button></section></div>
+
+<!-- ================= MODALS & TOAST NOTIFICATIONS ================= -->
+
+<!-- Modern Native <dialog> for Privacy & Architecture (Uses light-dismiss closedby="any") -->
+<dialog id="privacy-dialog" class="modern-dialog" closedby="any" aria-labelledby="privacy-dialog-title">
+  <div class="dialog-content">
+    <div class="dialog-header">
+      <div class="dialog-icon">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div>
+        <div class="dialog-tag">ZERO-LEAKAGE PROMISE</div>
+        <h2 id="privacy-dialog-title" class="dialog-title">Client-First Privacy Architecture</h2>
+      </div>
+      <button class="dialog-close-btn" id="close-privacy-dialog" aria-label="Close dialog">×</button>
+    </div>
+
+    <div class="dialog-body">
+      <p>CyberGuard Hub is engineered on the principle that digital safety tools must never become attack surfaces themselves:</p>
+      <div class="privacy-bullet-grid">
+        <div class="privacy-bullet">
+          <b>Zero Ingestion Persistence</b>
+          <p>The server processes your messages, links, code, and files strictly in RAM for the lifetime of the request. No database saves your submitted raw content.</p>
+        </div>
+        <div class="privacy-bullet">
+          <b>Offline Link Heuristics</b>
+          <p>The URL analyzer never visits or curls target domains. It performs static syntactic, lexical, and character distance audits only.</p>
+        </div>
+        <div class="privacy-bullet">
+          <b>Sanitized AI Context</b>
+          <p>When Groq or Gemini explanations are generated, the server transmits only abstract rule labels and sanitized scores—never your original message or code.</p>
+        </div>
+        <div class="privacy-bullet">
+          <b>Strict Opt-In Vision</b>
+          <p>Image files are only sent to Google Gemini if you explicitly check the opt-in box on that specific upload.</p>
+        </div>
+      </div>
+      <div class="notice-box mt-4">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+        <span>Reminder: This is a hackathon safety prototype. Always verify critical requests via official hotlines.</span>
+      </div>
+    </div>
+
+    <div class="dialog-footer">
+      <button class="btn btn-primary" id="privacy-dialog-ok">I Understand</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- Preset Selection Modal for Realistic Demos -->
+<dialog id="preset-dialog" class="modern-dialog" closedby="any" aria-labelledby="preset-dialog-title">
+  <div class="dialog-content">
+    <div class="dialog-header">
+      <div class="dialog-icon">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+      </div>
+      <div>
+        <div class="dialog-tag">ATTACK VECTOR CATALOG</div>
+        <h2 id="preset-dialog-title" class="dialog-title">Select Attack Vector Preset</h2>
+      </div>
+      <button class="dialog-close-btn" id="close-preset-dialog" aria-label="Close dialog">×</button>
+    </div>
+
+    <div class="dialog-body">
+      <p class="text-sub">Choose a realistic threat sample to load into the active investigation module:</p>
+      <div class="preset-items-list" id="preset-items-list">
+        <!-- Populated dynamically via JS -->
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<!-- Interactive Toast System -->
+<div id="toast" class="toast-notification" role="status" aria-live="polite">
+  <div class="toast-icon" id="toast-icon">✓</div>
+  <div class="toast-message" id="toast-message">Notification</div>
+</div>
+
 <script src="/static/app.js" defer></script>
-</body></html>
+</body>
+</html>

@@ -54,6 +54,7 @@ The container binds to Render's `PORT`; `/health` is configured as the service h
 - `POST /api/analyze/code` — `{"code":"..."}`
 - `POST /api/analyze/media` — multipart fields `file` and optional `ai_visual_review=false`; set the latter to `true` only when you consent to send a supported image to Gemini. The optional review is image-only and not a deepfake verdict.
 - `GET /api/modules`
+- `GET /api/rules` — transparent heuristic catalog with rule IDs, descriptions, and mitigations
 - `GET /health`
 
 ## Tests
