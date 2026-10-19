@@ -30,7 +30,7 @@ def inspect_c2pa(data: bytes, mime: str) -> dict:
             "note": "Signed content credentials describe provenance claims and validation; they do not prove that depicted events are true.",
         }
     except ImportError:
-        return {"status": "unavailable", "note": "C2PA reader is not installed on this host."}
+        return {"status": "unavailable", "note": "C2PA reader is not installed on this host; no conclusion about authenticity can be drawn from this check."}
     except Exception:
         return {"status": "no_valid_manifest", "note": "No readable C2PA content credentials were found. Their absence does not prove a file is fake or authentic."}
 
