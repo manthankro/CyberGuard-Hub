@@ -18,6 +18,12 @@ def inspect_media(data: bytes, filename: str, content_type: str) -> dict:
         "size_bytes": len(data),
         "sha256": hashlib.sha256(data).hexdigest(),
         "signals": [],
+        # Keep the shared report contract, but do not invent a media authenticity score.
+        "risk_score": None,
+        "risk_level": "inconclusive",
+        "score_kind": "not_scored",
+        "score_explanation": "No media authenticity score is available. File metadata and hashes cannot establish whether media is AI-generated or manipulated.",
+        "summary": "Local file inspection completed. Authenticity remains inconclusive.",
         "assessment": "inconclusive",
         "analysis_mode": "local file and metadata inspection",
         "recommendations": [
@@ -80,7 +86,7 @@ def inspect_media(data: bytes, filename: str, content_type: str) -> dict:
         if not data:
             result["signals"].append({"rule_id": "MEDIA-EMPTY", "category": "No media bytes found", "evidence": "Empty file", "why_it_matters": "An empty file cannot be inspected.", "severity": "medium"})
         else:
-            result["signals"].append({"rule_id": "MEDIA-AUDIO-VIDEO-METADATA-ONLY", "category": "Audio/video authenticity not analyzed", "evidence": "Local file hash and size recorded; no frame or waveform detector is configured", "why_it_matters": "This prototype does not inspect audio waveforms, video frames, or provenance credentials.", "severity": "low"})
+            result["signals"].append({"rule_id": "MEDIA-AUDIO-VIDEO-METADATA-ONLY", "category": "Audio/video authenticity not analyzed", "evidence": "Local file hash and size recorded. Optional video model scanning runs only when selected with consent.", "why_it_matters": "File metadata and fingerprints alone cannot tell whether audio or video is authentic, AI-generated, or manipulated.", "severity": "low"})
     else:
         result["signals"].append({"rule_id": "MEDIA-UNSUPPORTED", "category": "Unsupported media type", "evidence": content_type, "why_it_matters": "Only common image, audio, and video uploads are accepted for inspection.", "severity": "medium"})
     return result
