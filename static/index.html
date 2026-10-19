@@ -10,7 +10,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="icon" type="image/jpeg" href="/static/logo.jpg">
-  <link rel="stylesheet" href="/static/style.css?v=20261019-media-fix">
+  <link rel="stylesheet" href="/static/style.css?v=20261019-v13">
+  <link rel="manifest" href="/static/manifest.json">
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js" defer></script>
 </head>
 <body>
 <div class="app-layout">
@@ -71,6 +73,8 @@
           <span>Media & EXIF</span>
         </button>
         <button class="nav-link" data-page="email-exposure"><span>Email Exposure</span></button>
+        <button class="nav-link" data-page="upi"><span>UPI / Payment</span></button>
+        <button class="nav-link" data-page="phone"><span>Phone Check</span></button>
 
       </nav>
 
@@ -128,6 +132,7 @@
           <span class="track-dot"></span>
           <span>NAVRATRI CODEATHON · CYBERSECURITY TRACK</span>
         </div>
+        <button class="top-icon-btn" id="elder-mode-toggle" title="Elder Mode" aria-label="Toggle Elder Mode" aria-pressed="false">Aa</button>
         <button class="top-icon-btn" id="quick-playbooks-btn" title="Emergency Playbooks" aria-label="Emergency Playbooks">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         </button>
@@ -394,6 +399,8 @@
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
             <span>Code Auditor</span>
           </button>
+          <button data-tool="upi" class="module-tab"><span>UPI Check</span></button>
+          <button data-tool="phone" class="module-tab"><span>Phone</span></button>
           <button data-tool="media" class="module-tab">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle></svg>
             <span>Media Verification</span>
@@ -460,7 +467,30 @@
               </div>
 
               <!-- Form: Media Verification -->
-              <div id="form-media" class="form-module hidden">
+
+              <!-- Form: UPI -->
+              <div id="form-upi" class="form-module hidden">
+                <label for="upi-input" class="input-label">UPI ID OR PAYMENT MESSAGE</label>
+                <textarea id="upi-input" class="code-textarea" placeholder="Paste UPI ID (name@ybl) or the full payment / refund message..."></textarea>
+                <div class="input-meta-row">
+                  <span class="input-hint">Offline heuristics only — never initiates a payment. QR images can be decoded client-side.</span>
+                  <span class="char-counter" data-for="upi-input">0 chars</span>
+                </div>
+                <div class="qr-upload-row" style="margin-top:0.75rem;">
+                  <label class="btn btn-secondary btn-sm" for="qr-file-input">📷 Scan QR image</label>
+                  <input type="file" id="qr-file-input" accept="image/*" hidden>
+                </div>
+              </div>
+              <!-- Form: Phone -->
+              <div id="form-phone" class="form-module hidden">
+                <label for="phone-input" class="input-label">PHONE NUMBER OR MESSAGE</label>
+                <textarea id="phone-input" class="code-textarea" placeholder="Paste a 10-digit mobile number or the full SMS / WhatsApp text..."></textarea>
+                <div class="input-meta-row">
+                  <span class="input-hint">Pattern checks only — not a live spam registry lookup.</span>
+                  <span class="char-counter" data-for="phone-input">0 chars</span>
+                </div>
+              </div>
+<div id="form-media" class="form-module hidden">
                 <label class="input-label">BINARY MEDIA FILE (IMAGE, AUDIO, OR VIDEO)</label>
                 <div class="drop-zone" id="media-drop-zone">
                   <div class="drop-zone-icon">
@@ -837,5 +867,12 @@
 </div>
 
 <script src="/static/app.js?v=20261019-media-fix" defer></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/static/sw.js').catch(function () {});
+    });
+  }
+</script>
 </body>
 </html>

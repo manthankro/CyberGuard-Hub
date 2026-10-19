@@ -13,9 +13,11 @@ from app.analyzers.code import analyze_code
 from app.analyzers.media import inspect_media
 from app.analyzers.triage import analyze_triage
 from app.analyzers.external import inspect_c2pa, scan_video_authenticity, check_email_breaches
+from app.analyzers.upi import analyze_upi
+from app.analyzers.phone import analyze_phone
 from app.llm import explain_findings, provider_status, review_media_observations
 
-app=FastAPI(title=settings.app_name,version="1.1.0",description="Evidence-led digital safety workspace")
+app=FastAPI(title=settings.app_name,version="1.3.0",description="Evidence-led digital safety workspace")
 STATIC=Path(__file__).resolve().parent.parent/"static"
 app.mount("/static",StaticFiles(directory=STATIC),name="static")
 
@@ -23,6 +25,8 @@ class TextRequest(BaseModel): text: str=Field(min_length=3,max_length=12000)
 class URLRequest(BaseModel): url: str=Field(min_length=3,max_length=2048)
 class CodeRequest(BaseModel): code: str=Field(min_length=3,max_length=30000)
 class TriageRequest(BaseModel): content: str=Field(min_length=3,max_length=12000)
+class UPIRequest(BaseModel): text: str=Field(min_length=3,max_length=4000)
+class PhoneRequest(BaseModel): text: str=Field(min_length=3,max_length=4000)
 class EmailExposureRequest(BaseModel):
     email: str=Field(min_length=6,max_length=254)
     consent: bool
@@ -82,7 +86,7 @@ def modules():
         {"id":"text","name":"Scam message","description":"Find urgency, credential, payment, and impersonation cues."},
         {"id":"url","name":"Link scanner","description":"Inspect URL text for suspicious destination patterns; never fetches the link."},
         {"id":"media","name":"Media verification","description":"Inspect image files and media fingerprints; optional Gemini image/video descriptions are not deepfake detection."},
-        {"id":"code","name":"Code audit","description":"Find selected vulnerability patterns with line references and fixes."},
+        {"id":"code","name":"Code audit","description":"Find selected vulnerability patterns with line references and fixes."},{"id":"upi","name":"UPI & payment check","description":"Inspect UPI IDs and payment-request language without initiating a transfer."},{"id":"phone","name":"Phone heuristic check","description":"Offline pattern checks for Indian mobile numbers in messages."},
     ]}
 async def with_domain_status(url: str) -> dict:
     try:
@@ -158,6 +162,22 @@ async def media_scan(file:UploadFile=File(...), ai_visual_review:bool=Form(False
             result["visual_review"]={"provider":None,"observations":"The optional Gemini review is temporarily unavailable. Local file inspection is still available.","label":"No AI media observations returned"}
     return result
 
+
+
+
+@app.post("/api/analyze/upi")
+def upi_scan(request: UPIRequest):
+    result = analyze_upi(request.text)
+    result["ai_explanation"], result["ai_provider"] = explain_findings("UPI payment indicators", result)
+    result["analysis_mode"] = f"UPI heuristics + {result['ai_provider']} explanation" if result.get("ai_provider") else "local UPI heuristics"
+    return result
+
+@app.post("/api/analyze/phone")
+def phone_scan(request: PhoneRequest):
+    result = analyze_phone(request.text)
+    result["ai_explanation"], result["ai_provider"] = explain_findings("phone number indicators", result)
+    result["analysis_mode"] = f"phone heuristics + {result['ai_provider']} explanation" if result.get("ai_provider") else "local phone heuristics"
+    return result
 
 @app.post("/api/analyze/email-exposure")
 async def email_exposure(request: EmailExposureRequest):

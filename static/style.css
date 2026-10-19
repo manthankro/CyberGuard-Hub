@@ -2570,3 +2570,38 @@ button {
 
 .score-explainer { margin: 8px 0 0; color: var(--text-sub); font-size: .78rem; line-height: 1.5; }
 .score-explainer b { color: var(--text-main); }
+
+
+/* --- Elder Mode --- */
+body.elder-mode {
+  font-size: 112%;
+}
+body.elder-mode .intro-title,
+body.elder-mode .panel-title,
+body.elder-mode .tool-name {
+  font-size: 1.35em;
+}
+body.elder-mode .btn,
+body.elder-mode .nav-link,
+body.elder-mode .module-tab {
+  min-height: 48px;
+  font-size: 1.05em;
+}
+body.elder-mode .code-textarea,
+body.elder-mode .text-input {
+  font-size: 1.15rem;
+  line-height: 1.6;
+}
+body.elder-mode .sidebar {
+  font-size: 1.05rem;
+}
+#elder-mode-toggle[aria-pressed="true"] {
+  outline: 2px solid var(--accent, #2ee59d);
+  color: #2ee59d;
+}
+.qr-upload-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
